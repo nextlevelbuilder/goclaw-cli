@@ -1,7 +1,7 @@
 ---
 phase: 6
 title: Team, Channel & Cron Commands
-status: planned
+status: completed
 priority: high
 effort: M
 depends_on: [phase-02]
@@ -79,17 +79,17 @@ goclaw cron runs <id> [--limit N]
 - Create: `cmd/teams.go`, `cmd/channels.go`, `cmd/cron.go`
 
 ## Todo
-- [ ] Team CRUD + member management
-- [ ] Team task board (list, create, assign, approve, reject, comment)
-- [ ] Team workspace file operations
-- [ ] Channel instance CRUD with type-specific config
-- [ ] Contact management (list, resolve)
-- [ ] Pending message retry
-- [ ] Group file writers management
-- [ ] Cron job CRUD
-- [ ] Cron schedule validation
-- [ ] Manual cron trigger
-- [ ] Cron run history display
+- [x] Team CRUD + member management
+- [x] Team task board (list, create, assign, approve, reject, comment)
+- [x] Team workspace file operations
+- [x] Channel instance CRUD with type-specific config
+- [x] Contact management (list, resolve)
+- [x] Pending message retry
+- [x] Group file writers management
+- [x] Cron job CRUD
+- [x] Cron schedule validation
+- [x] Manual cron trigger
+- [x] Cron run history display
 
 ## Success Criteria
 - `goclaw teams create --name "Research" --agents agent1,agent2` creates team

@@ -1,7 +1,7 @@
 ---
 phase: 9
 title: Testing, CI/CD & Release
-status: planned
+status: completed
 priority: high
 effort: M
 depends_on: [phase-03, phase-04, phase-05, phase-06, phase-07, phase-08]
@@ -55,15 +55,15 @@ Unit tests, integration tests, CI/CD pipeline, and cross-platform release automa
 - Create: `internal/output/formatter_test.go`
 
 ## Todo
-- [ ] Unit tests for HTTP client
-- [ ] Unit tests for WebSocket client
-- [ ] Unit tests for output formatters
-- [ ] Unit tests for config loader
-- [ ] Integration test framework with mock server
-- [ ] CI workflow (lint + build + test)
-- [ ] Release workflow (GoReleaser)
-- [ ] GoReleaser config for 5 platforms
-- [ ] README with installation instructions
+- [x] Unit tests for HTTP client
+- [x] Unit tests for WebSocket client
+- [x] Unit tests for output formatters
+- [x] Unit tests for config loader
+- [x] Integration test framework with mock server
+- [x] CI workflow (lint + build + test)
+- [x] Release workflow (GoReleaser)
+- [x] GoReleaser config for 5 platforms
+- [x] README with installation instructions
 
 ## Success Criteria
 - `go test ./...` passes with > 70% coverage

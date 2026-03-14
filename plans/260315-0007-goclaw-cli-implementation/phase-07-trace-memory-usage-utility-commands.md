@@ -1,7 +1,7 @@
 ---
 phase: 7
 title: Trace, Memory, Usage & Utility Commands
-status: planned
+status: completed
 priority: medium
 effort: M
 depends_on: [phase-02]
@@ -75,16 +75,16 @@ goclaw approvals deny <id> [--reason <text>]
 - Create: `cmd/usage.go`, `cmd/delegations.go`, `cmd/approvals.go`
 
 ## Todo
-- [ ] Trace list with filters
-- [ ] Trace detail with span tree visualization
-- [ ] Trace export to file
-- [ ] Cost summary
-- [ ] Memory CRUD operations
-- [ ] Memory semantic search
-- [ ] Knowledge graph operations
-- [ ] Usage analytics display
-- [ ] Delegation history
-- [ ] Approval management
+- [x] Trace list with filters
+- [x] Trace detail with span tree visualization
+- [x] Trace export to file
+- [x] Cost summary
+- [x] Memory CRUD operations
+- [x] Memory semantic search
+- [x] Knowledge graph operations
+- [x] Usage analytics display
+- [x] Delegation history
+- [x] Approval management
 
 ## Success Criteria
 - `goclaw traces list` shows traces with token/cost summary

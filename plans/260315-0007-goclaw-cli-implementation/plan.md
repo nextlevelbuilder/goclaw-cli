@@ -1,7 +1,8 @@
 ---
 title: GoClaw CLI Implementation
-status: planned
+status: completed
 created: 2026-03-15
+completed: 2026-03-15
 priority: high
 blockedBy: []
 blocks: []
@@ -70,15 +71,15 @@ goclaw-cli/
 
 | # | Phase | Status | Effort | Priority |
 |---|-------|--------|--------|----------|
-| 1 | [Project Bootstrap](phase-01-project-bootstrap.md) | planned | S | critical |
-| 2 | [Core Client & Auth](phase-02-core-client-and-auth.md) | planned | M | critical |
-| 3 | [Agent & Chat Commands](phase-03-agent-and-chat-commands.md) | planned | L | critical |
-| 4 | [Session & Skill Commands](phase-04-session-and-skill-commands.md) | planned | M | high |
-| 5 | [MCP, Provider & Tool Commands](phase-05-mcp-provider-tool-commands.md) | planned | M | high |
-| 6 | [Team, Channel & Cron Commands](phase-06-team-channel-cron-commands.md) | planned | M | high |
-| 7 | [Trace, Memory, Usage & Utility Commands](phase-07-trace-memory-usage-utility-commands.md) | planned | M | medium |
-| 8 | [Config, Logs, Storage & Admin Commands](phase-08-config-logs-storage-admin-commands.md) | planned | M | medium |
-| 9 | [Testing, CI/CD & Release](phase-09-testing-cicd-release.md) | planned | M | high |
+| 1 | [Project Bootstrap](phase-01-project-bootstrap.md) | completed | S | critical |
+| 2 | [Core Client & Auth](phase-02-core-client-and-auth.md) | completed | M | critical |
+| 3 | [Agent & Chat Commands](phase-03-agent-and-chat-commands.md) | completed | L | critical |
+| 4 | [Session & Skill Commands](phase-04-session-and-skill-commands.md) | completed | M | high |
+| 5 | [MCP, Provider & Tool Commands](phase-05-mcp-provider-tool-commands.md) | completed | M | high |
+| 6 | [Team, Channel & Cron Commands](phase-06-team-channel-cron-commands.md) | completed | M | high |
+| 7 | [Trace, Memory, Usage & Utility Commands](phase-07-trace-memory-usage-utility-commands.md) | completed | M | medium |
+| 8 | [Config, Logs, Storage & Admin Commands](phase-08-config-logs-storage-admin-commands.md) | completed | M | medium |
+| 9 | [Testing, CI/CD & Release](phase-09-testing-cicd-release.md) | completed | M | high |
 
 ## Dual Mode Strategy
 

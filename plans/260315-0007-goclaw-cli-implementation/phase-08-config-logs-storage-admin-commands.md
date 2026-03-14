@@ -1,7 +1,7 @@
 ---
 phase: 8
 title: Config, Logs, Storage & Admin Commands
-status: planned
+status: completed
 priority: medium
 effort: M
 depends_on: [phase-02]
@@ -81,13 +81,13 @@ goclaw media get <mediaID> [--output <file>]
 - Create: `cmd/credentials.go`, `cmd/tts.go`, `cmd/activity.go`, `cmd/media.go`
 
 ## Todo
-- [ ] Config get/apply/patch/schema
-- [ ] Real-time log tailing via WebSocket
-- [ ] Storage file operations
-- [ ] CLI credential CRUD
-- [ ] TTS operations
-- [ ] Activity/audit log viewer
-- [ ] Media upload/download with progress
+- [x] Config get/apply/patch/schema
+- [x] Real-time log tailing via WebSocket
+- [x] Storage file operations
+- [x] CLI credential CRUD
+- [x] TTS operations
+- [x] Activity/audit log viewer
+- [x] Media upload/download with progress
 
 ## Success Criteria
 - `goclaw config get` shows full server config

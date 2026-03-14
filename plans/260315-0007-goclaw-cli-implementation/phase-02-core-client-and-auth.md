@@ -1,7 +1,7 @@
 ---
 phase: 2
 title: Core Client & Auth
-status: planned
+status: completed
 priority: critical
 effort: M
 depends_on: [phase-01]
@@ -97,14 +97,14 @@ internal/tui/prompt.go        — Interactive prompts (confirm, select, input)
 - Create: `cmd/auth.go`, `cmd/status.go`
 
 ## Todo
-- [ ] Config loader with profile support
-- [ ] HTTP REST client with auth, retry, TLS
-- [ ] WebSocket RPC client with connect, call, subscribe, stream
-- [ ] Token storage (keyring + file fallback)
-- [ ] Auth commands: login, logout, whoami, pair
-- [ ] Output formatters: table, JSON, YAML
-- [ ] TUI prompts with automation mode detection
-- [ ] Status/health command
+- [x] Config loader with profile support
+- [x] HTTP REST client with auth, retry, TLS
+- [x] WebSocket RPC client with connect, call, subscribe, stream
+- [x] Token storage (keyring + file fallback)
+- [x] Auth commands: login, logout, whoami, pair
+- [x] Output formatters: table, JSON, YAML
+- [x] TUI prompts with automation mode detection
+- [x] Status/health command
 
 ## Success Criteria
 - `goclaw auth login` stores credentials securely

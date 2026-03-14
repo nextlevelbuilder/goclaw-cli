@@ -1,7 +1,7 @@
 ---
 phase: 1
 title: Project Bootstrap
-status: planned
+status: completed
 priority: critical
 effort: S
 ---
@@ -57,14 +57,14 @@ Initialize Go module, repo, project structure, Makefile, and CI scaffolding.
 - Create: `go.mod`, `go.sum`
 
 ## Todo
-- [ ] Create GitHub repo
-- [ ] Init Go module
-- [ ] Create directory structure
-- [ ] Implement root command with global flags
-- [ ] Implement version command
-- [ ] Create Makefile
-- [ ] Create GoReleaser config
-- [ ] Initial commit & push
+- [x] Create GitHub repo
+- [x] Init Go module
+- [x] Create directory structure
+- [x] Implement root command with global flags
+- [x] Implement version command
+- [x] Create Makefile
+- [x] Create GoReleaser config
+- [x] Initial commit & push
 
 ## Success Criteria
 - `go build ./...` compiles

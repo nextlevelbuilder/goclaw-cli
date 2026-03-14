@@ -1,7 +1,7 @@
 ---
 phase: 5
 title: MCP, Provider & Tool Commands
-status: planned
+status: completed
 priority: high
 effort: M
 depends_on: [phase-02]
@@ -87,14 +87,14 @@ goclaw tools invoke <name> --params '{"key":"value"}'
 - Create: `cmd/mcp.go`, `cmd/providers.go`, `cmd/tools.go`
 
 ## Todo
-- [ ] MCP server CRUD + test + tools listing
-- [ ] MCP grants management (agent + user level)
-- [ ] MCP access request workflow
-- [ ] Provider CRUD with encrypted key input
-- [ ] Provider model listing and verification
-- [ ] Custom tool CRUD
-- [ ] Built-in tool listing and settings
-- [ ] Tool invocation with parameter parsing
+- [x] MCP server CRUD + test + tools listing
+- [x] MCP grants management (agent + user level)
+- [x] MCP access request workflow
+- [x] Provider CRUD with encrypted key input
+- [x] Provider model listing and verification
+- [x] Custom tool CRUD
+- [x] Built-in tool listing and settings
+- [x] Tool invocation with parameter parsing
 
 ## Success Criteria
 - `goclaw mcp servers create --transport stdio --command npx --args ...` registers server

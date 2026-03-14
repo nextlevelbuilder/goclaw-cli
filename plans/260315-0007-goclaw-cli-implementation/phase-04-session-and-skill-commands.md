@@ -1,7 +1,7 @@
 ---
 phase: 4
 title: Session & Skill Commands
-status: planned
+status: completed
 priority: high
 effort: M
 depends_on: [phase-02]
@@ -54,17 +54,17 @@ goclaw skills install-deps
 - Create: `cmd/sessions.go`, `cmd/skills.go`
 
 ## Todo
-- [ ] Session list with agent/user filters
-- [ ] Session preview with message rendering
-- [ ] Session delete/reset/label
-- [ ] Skill CRUD commands
-- [ ] Skill upload with progress
-- [ ] Skill grant/revoke for agents and users
-- [ ] Skill toggle enable/disable
-- [ ] Skill version listing
-- [ ] Runtime listing
-- [ ] File browser for skill content
-- [ ] Dependency management (rescan/install)
+- [x] Session list with agent/user filters
+- [x] Session preview with message rendering
+- [x] Session delete/reset/label
+- [x] Skill CRUD commands
+- [x] Skill upload with progress
+- [x] Skill grant/revoke for agents and users
+- [x] Skill toggle enable/disable
+- [x] Skill version listing
+- [x] Runtime listing
+- [x] File browser for skill content
+- [x] Dependency management (rescan/install)
 
 ## Success Criteria
 - `goclaw sessions list` shows sessions with token counts

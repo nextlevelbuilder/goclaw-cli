@@ -1,7 +1,7 @@
 ---
 phase: 3
 title: Agent & Chat Commands
-status: planned
+status: completed
 priority: critical
 effort: L
 depends_on: [phase-02]
@@ -111,17 +111,17 @@ goclaw chat <agent> -m "message" --model claude-sonnet-4-6 --no-stream
 - Create: `internal/tui/chat.go`
 
 ## Todo
-- [ ] Agent CRUD commands (list, get, create, update, delete)
-- [ ] Agent share/unshare commands
-- [ ] Agent regenerate/resummon commands
-- [ ] Agent links CRUD
-- [ ] Agent instance file management
-- [ ] Interactive chat TUI with streaming
-- [ ] Single-shot chat for automation
-- [ ] Stdin pipe support
-- [ ] NDJSON streaming for automation mode
-- [ ] Chat session management (--session flag)
-- [ ] In-chat slash commands (/abort, /sessions, /clear)
+- [x] Agent CRUD commands (list, get, create, update, delete)
+- [x] Agent share/unshare commands
+- [x] Agent regenerate/resummon commands
+- [x] Agent links CRUD
+- [x] Agent instance file management
+- [x] Interactive chat TUI with streaming
+- [x] Single-shot chat for automation
+- [x] Stdin pipe support
+- [x] NDJSON streaming for automation mode
+- [x] Chat session management (--session flag)
+- [x] In-chat slash commands (/abort, /sessions, /clear)
 
 ## Success Criteria
 - `goclaw agents list` shows all agents in table
