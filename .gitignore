@@ -1,0 +1,26 @@
+# Binaries
+goclaw
+goclaw.exe
+dist/
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Credentials
+.goclaw/
+
+# Go
+vendor/
+*.test
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
