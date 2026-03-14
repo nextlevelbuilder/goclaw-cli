@@ -113,31 +113,37 @@ func (c *HTTPClient) HealthCheck() error {
 }
 
 func (c *HTTPClient) do(method, path string, body any) (json.RawMessage, error) {
-	url := c.BaseURL + path
+	reqURL := c.BaseURL + path
 
-	var reqBody io.Reader
+	// Marshal body once, reuse for retries
+	var bodyData []byte
 	if body != nil {
-		data, err := json.Marshal(body)
+		var err error
+		bodyData, err = json.Marshal(body)
 		if err != nil {
 			return nil, fmt.Errorf("marshal request: %w", err)
 		}
-		reqBody = bytes.NewReader(data)
-	}
-
-	req, err := http.NewRequest(method, url, reqBody)
-	if err != nil {
-		return nil, err
-	}
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-	if c.Token != "" {
-		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}
 
 	// Retry on 429 / 5xx
 	var resp *http.Response
+	var err error
 	for attempt := range 3 {
+		var reqBody io.Reader
+		if bodyData != nil {
+			reqBody = bytes.NewReader(bodyData)
+		}
+		req, reqErr := http.NewRequest(method, reqURL, reqBody)
+		if reqErr != nil {
+			return nil, reqErr
+		}
+		if bodyData != nil {
+			req.Header.Set("Content-Type", "application/json")
+		}
+		if c.Token != "" {
+			req.Header.Set("Authorization", "Bearer "+c.Token)
+		}
+
 		resp, err = c.HTTPClient.Do(req)
 		if err != nil {
 			return nil, fmt.Errorf("request failed: %w", err)
@@ -148,11 +154,6 @@ func (c *HTTPClient) do(method, path string, body any) (json.RawMessage, error) 
 		resp.Body.Close()
 		if attempt < 2 {
 			time.Sleep(time.Duration(1<<attempt) * time.Second)
-			// Re-create request body for retry
-			if body != nil {
-				data, _ := json.Marshal(body)
-				req.Body = io.NopCloser(bytes.NewReader(data))
-			}
 		}
 	}
 	defer resp.Body.Close()

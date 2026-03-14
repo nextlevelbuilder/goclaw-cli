@@ -3,6 +3,9 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
 	"github.com/spf13/cobra"
@@ -63,8 +66,12 @@ var logsTailCmd = &cobra.Command{
 			return err
 		}
 
-		// Block until interrupt
-		select {}
+		// Block until interrupt (Ctrl+C)
+		sigCh := make(chan os.Signal, 1)
+		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+		<-sigCh
+		fmt.Println("\nStopping log stream...")
+		return nil
 	},
 }
 

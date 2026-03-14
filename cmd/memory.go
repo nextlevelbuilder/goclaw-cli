@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
@@ -45,7 +46,7 @@ var memoryGetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/memory/" + args[0] + "/" + args[1])
+		data, err := c.Get("/v1/memory/" + url.PathEscape(args[0]) + "/" + url.PathEscape(args[1]))
 		if err != nil {
 			return err
 		}
@@ -66,7 +67,7 @@ var memoryStoreCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Put("/v1/memory/"+args[0]+"/"+args[1], map[string]any{"content": content})
+		_, err = c.Put("/v1/memory/"+url.PathEscape(args[0])+"/"+url.PathEscape(args[1]), map[string]any{"content": content})
 		if err != nil {
 			return err
 		}
@@ -85,7 +86,7 @@ var memoryDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Delete("/v1/memory/" + args[0] + "/" + args[1])
+		_, err = c.Delete("/v1/memory/" + url.PathEscape(args[0]) + "/" + url.PathEscape(args[1]))
 		if err != nil {
 			return err
 		}

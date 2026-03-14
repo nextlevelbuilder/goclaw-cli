@@ -23,7 +23,8 @@ type WSClient struct {
 	insecure  bool
 
 	nextID    atomic.Int64
-	mu        sync.Mutex
+	mu        sync.Mutex   // protects pending and listeners
+	writeMu   sync.Mutex   // protects concurrent writes (gorilla requirement)
 	pending   map[string]chan *WSResponse
 	listeners map[string][]func(*WSEvent)
 	done      chan struct{}
@@ -130,7 +131,11 @@ func (ws *WSClient) Call(method string, params any) (json.RawMessage, error) {
 		ws.mu.Unlock()
 	}()
 
-	if err := ws.conn.WriteJSON(req); err != nil {
+	// Serialize writes to prevent concurrent write panics
+	ws.writeMu.Lock()
+	err := ws.conn.WriteJSON(req)
+	ws.writeMu.Unlock()
+	if err != nil {
 		return nil, fmt.Errorf("write: %w", err)
 	}
 
@@ -154,26 +159,30 @@ func (ws *WSClient) Subscribe(eventType string, handler func(*WSEvent)) {
 	ws.listeners[eventType] = append(ws.listeners[eventType], handler)
 }
 
+// ClearListeners removes all event listeners (call between Stream invocations).
+func (ws *WSClient) ClearListeners() {
+	ws.mu.Lock()
+	defer ws.mu.Unlock()
+	ws.listeners = make(map[string][]func(*WSEvent))
+}
+
 // Stream sends an RPC request and delivers events to the handler until run completes.
-// Returns the final response payload.
+// Returns the final response payload. Cleans up listeners when done.
 func (ws *WSClient) Stream(method string, params any, onEvent func(*WSEvent)) (json.RawMessage, error) {
-	// Register temporary event listeners
+	// Clear previous listeners to prevent accumulation
+	ws.ClearListeners()
+
+	// Use sync.Once to safely close the done channel exactly once
 	done := make(chan struct{})
-	ws.Subscribe("chunk", func(e *WSEvent) {
-		onEvent(e)
-	})
-	ws.Subscribe("tool.call", func(e *WSEvent) {
-		onEvent(e)
-	})
-	ws.Subscribe("tool.result", func(e *WSEvent) {
-		onEvent(e)
-	})
-	ws.Subscribe("run.started", func(e *WSEvent) {
-		onEvent(e)
-	})
+	var closeOnce sync.Once
+
+	ws.Subscribe("chunk", func(e *WSEvent) { onEvent(e) })
+	ws.Subscribe("tool.call", func(e *WSEvent) { onEvent(e) })
+	ws.Subscribe("tool.result", func(e *WSEvent) { onEvent(e) })
+	ws.Subscribe("run.started", func(e *WSEvent) { onEvent(e) })
 	ws.Subscribe("run.completed", func(e *WSEvent) {
 		onEvent(e)
-		close(done)
+		closeOnce.Do(func() { close(done) })
 	})
 
 	resp, err := ws.Call(method, params)
@@ -246,8 +255,9 @@ func (ws *WSClient) readLoop() {
 				continue
 			}
 			ws.mu.Lock()
-			handlers := ws.listeners[evt.Event]
-			// Also notify wildcard listeners
+			// Copy handlers to avoid holding lock during callback
+			handlers := make([]func(*WSEvent), 0, len(ws.listeners[evt.Event])+len(ws.listeners["*"]))
+			handlers = append(handlers, ws.listeners[evt.Event]...)
 			handlers = append(handlers, ws.listeners["*"]...)
 			ws.mu.Unlock()
 			for _, h := range handlers {

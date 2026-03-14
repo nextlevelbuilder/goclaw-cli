@@ -21,10 +21,11 @@ type Config struct {
 }
 
 // Profile represents a named server connection profile.
+// Token is NOT stored in config.yaml — it goes to the credential store.
 type Profile struct {
 	Name         string `yaml:"name"`
 	Server       string `yaml:"server"`
-	Token        string `yaml:"token"`
+	Token        string `yaml:"-"` // never persisted in config file
 	DefaultAgent string `yaml:"default_agent,omitempty"`
 	OutputFormat string `yaml:"output,omitempty"`
 }
@@ -59,10 +60,13 @@ func Load(cmd *cobra.Command) (*Config, error) {
 		}
 		if p := fc.FindProfile(profileName); p != nil {
 			cfg.Server = p.Server
-			cfg.Token = p.Token
 			cfg.Profile = p.Name
 			if p.OutputFormat != "" {
 				cfg.OutputFormat = p.OutputFormat
+			}
+			// Token loaded from credential store, not config file
+			if tokenData, err := os.ReadFile(filepath.Join(Dir(), "credentials_"+p.Name)); err == nil {
+				cfg.Token = string(tokenData)
 			}
 		}
 	}
@@ -88,8 +92,12 @@ func Load(cmd *cobra.Command) (*Config, error) {
 	if cmd.Flags().Changed("output") {
 		cfg.OutputFormat, _ = cmd.Flags().GetString("output")
 	}
-	cfg.Insecure, _ = cmd.Flags().GetBool("insecure")
-	cfg.Verbose, _ = cmd.Flags().GetBool("verbose")
+	if cmd.Flags().Changed("insecure") {
+		cfg.Insecure, _ = cmd.Flags().GetBool("insecure")
+	}
+	if cmd.Flags().Changed("verbose") {
+		cfg.Verbose, _ = cmd.Flags().GetBool("verbose")
+	}
 	cfg.Yes, _ = cmd.Flags().GetBool("yes")
 
 	return cfg, nil
