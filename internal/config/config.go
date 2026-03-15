@@ -173,6 +173,11 @@ func loadFile() (*FileConfig, error) {
 	if err != nil {
 		return nil, err
 	}
+	return parseConfig(data)
+}
+
+// parseConfig parses YAML bytes into FileConfig (exported for testing).
+func parseConfig(data []byte) (*FileConfig, error) {
 	var fc FileConfig
 	if err := yaml.Unmarshal(data, &fc); err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
@@ -180,11 +185,16 @@ func loadFile() (*FileConfig, error) {
 	return &fc, nil
 }
 
+// marshalConfig serializes FileConfig to YAML bytes (exported for testing).
+func marshalConfig(fc *FileConfig) ([]byte, error) {
+	return yaml.Marshal(fc)
+}
+
 func saveFile(fc *FileConfig) error {
 	if err := os.MkdirAll(Dir(), 0700); err != nil {
 		return err
 	}
-	data, err := yaml.Marshal(fc)
+	data, err := marshalConfig(fc)
 	if err != nil {
 		return err
 	}
