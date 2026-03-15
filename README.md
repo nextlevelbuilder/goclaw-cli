@@ -76,6 +76,38 @@ echo "Analyze this log" | goclaw chat myagent
 | `tts` | Text-to-speech operations |
 | `media` | Media upload/download |
 | `activity` | Audit log |
+| `api-keys` | API key management (create, list, revoke) |
+| `api-docs` | API documentation (Swagger UI, OpenAPI spec) |
+
+## API Keys
+
+Create scoped, revocable API keys for CI/CD and integrations:
+
+```bash
+# Create a key with read+write scopes
+goclaw api-keys create --name "ci-deploy" --scopes "operator.read,operator.write"
+
+# Create a key with 30-day expiry
+goclaw api-keys create --name "temp-access" --scopes "operator.read" --expires-in 2592000
+
+# List all keys (raw key is only shown at creation)
+goclaw api-keys list
+
+# Revoke a key
+goclaw api-keys revoke <key-id>
+```
+
+Available scopes: `operator.admin`, `operator.read`, `operator.write`, `operator.approvals`, `operator.pairing`
+
+## API Docs
+
+```bash
+# Open Swagger UI in browser
+goclaw api-docs open
+
+# Fetch OpenAPI 3.0 spec as JSON
+goclaw api-docs spec -o json
+```
 
 ## Automation Mode
 

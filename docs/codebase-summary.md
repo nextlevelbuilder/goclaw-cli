@@ -9,10 +9,10 @@
 
 ## Overview
 
-GoClaw CLI is a production-ready Go application (1,100+ lines) providing command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 28 command groups across 21 command files with dual modes: interactive (human) and automation (CI/agent).
+GoClaw CLI is a production-ready Go application (1,100+ lines) providing command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30 command groups across 23 command files with dual modes: interactive (human) and automation (CI/agent).
 
 **Key Metrics:**
-- **21 command files** in `cmd/`
+- **23 command files** in `cmd/`
 - **7 internal packages** (client, config, output, tui)
 - **4 core dependencies** (cobra, websocket, yaml, term)
 - **No ORM, no external CLIs** — single statically-linked binary
@@ -59,6 +59,8 @@ All files follow Cobra pattern: root command + subcommands.
 | `admin.go` | Admin operations | 250+ | Admin commands (3rd largest) |
 | `status.go` | `status` | 80+ | Server health check |
 | `version.go` | `version` | 60+ | Version display |
+| `api-keys.go` | `api-keys` (list/create/revoke) | 135 | API key management |
+| `api-docs.go` | `api-docs` (open/spec) | 82 | API documentation viewer |
 | `helpers.go` | Helper functions | 100+ | Shared utilities (newHTTP, unmarshal) |
 
 **Command File Stats:**
@@ -227,6 +229,8 @@ goclaw (root)
 │   ├── delete
 │   ├── share
 │   └── delegation-link
+├── api-keys (list, create, revoke)
+├── api-docs (open, spec)
 ├── chat
 ├── sessions (list, get, delete, reset, label)
 ├── skills (list, upload, delete)
@@ -252,7 +256,7 @@ goclaw (root)
 └── version
 ```
 
-**Total: 28 command groups**
+**Total: 30 command groups**
 
 ---
 
@@ -396,11 +400,11 @@ Each level overrides the previous.
 
 | Category | Count | Est. LOC |
 |----------|-------|---------|
-| Command files | 21 | 2,500+ |
+| Command files | 23 | 2,717+ |
 | Internal packages | 7 | 600+ |
 | Build/CI configs | 3 | 80+ |
 | Docs | 5 | 600+ |
-| **Total** | **36** | **3,780+** |
+| **Total** | **38** | **3,997+** |
 
 ---
 

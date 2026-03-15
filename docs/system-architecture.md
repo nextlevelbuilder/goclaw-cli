@@ -57,9 +57,11 @@ main()
 rootCmd (goclaw)
   ├─ PersistentFlags: --server, --token, --output, --yes, --verbose, --insecure, --profile
   ├─ PersistentPreRunE: Load config, create printer
-  └─ Subcommands (28 groups)
+  └─ Subcommands (30 groups)
       ├─ auth (login, logout, use-context)
       ├─ agents (list, get, create, update, delete, share)
+      ├─ api-keys (list, create, revoke)
+      ├─ api-docs (open, spec)
       ├─ chat (interactive + streaming)
       ├─ sessions, skills, mcp, providers, tools, cron, teams, channels...
 ```
