@@ -42,7 +42,7 @@ func Execute() {
 func init() {
 	pf := rootCmd.PersistentFlags()
 	pf.String("server", "", "GoClaw server URL (env: GOCLAW_SERVER)")
-	pf.String("token", "", "Auth token (env: GOCLAW_TOKEN)")
+	pf.String("token", "", "Auth token or API key (env: GOCLAW_TOKEN)")
 	pf.StringP("output", "o", "table", "Output format: table, json, yaml")
 	pf.BoolP("yes", "y", false, "Skip confirmation prompts (automation mode)")
 	pf.Bool("insecure", false, "Skip TLS certificate verification")
