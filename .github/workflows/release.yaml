@@ -22,3 +22,5 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           hooks: goreleaser
           allow-initial-development-versions: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
