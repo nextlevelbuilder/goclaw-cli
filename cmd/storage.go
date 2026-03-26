@@ -50,6 +50,7 @@ var storageGetCmd = &cobra.Command{
 			return err
 		}
 		outFile, _ := cmd.Flags().GetString("output")
+		// Don't escape path separators — server expects raw path segments
 		resp, err := c.GetRaw("/v1/storage/files/" + args[0])
 		if err != nil {
 			return err
@@ -86,7 +87,8 @@ var storageDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Delete("/v1/storage/files/" + url.PathEscape(args[0]))
+		// Don't escape path separators — server expects raw path segments
+		_, err = c.Delete("/v1/storage/files/" + args[0])
 		if err != nil {
 			return err
 		}
@@ -119,7 +121,10 @@ var storageDownloadCmd = &cobra.Command{
 			return err
 		}
 		outFile, _ := cmd.Flags().GetString("output")
-		resp, err := c.GetRaw("/v1/storage/files/" + args[0] + "?download=true")
+		// Don't escape path separators — server expects raw path segments
+		q := url.Values{}
+		q.Set("download", "true")
+		resp, err := c.GetRaw("/v1/storage/files/" + args[0] + "?" + q.Encode())
 		if err != nil {
 			return err
 		}

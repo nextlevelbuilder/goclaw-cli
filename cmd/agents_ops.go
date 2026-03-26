@@ -39,7 +39,7 @@ var agentsUnshareCmd = &cobra.Command{
 			return err
 		}
 		userID, _ := cmd.Flags().GetString("user")
-		_, err = c.Delete("/v1/agents/" + url.PathEscape(args[0]) + "/shares/" + userID)
+		_, err = c.Delete("/v1/agents/" + url.PathEscape(args[0]) + "/shares/" + url.PathEscape(userID))
 		if err != nil {
 			return err
 		}

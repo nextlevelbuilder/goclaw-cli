@@ -51,7 +51,7 @@ var channelsWritersRemoveCmd = &cobra.Command{
 			return err
 		}
 		user, _ := cmd.Flags().GetString("user")
-		_, err = c.Delete("/v1/channels/instances/" + url.PathEscape(args[0]) + "/writers/" + user)
+		_, err = c.Delete("/v1/channels/instances/" + url.PathEscape(args[0]) + "/writers/" + url.PathEscape(user))
 		if err != nil {
 			return err
 		}
