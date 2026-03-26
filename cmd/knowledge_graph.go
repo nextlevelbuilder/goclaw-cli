@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// --- KG Entities subgroup ---
+var kgCmd = &cobra.Command{Use: "knowledge-graph", Aliases: []string{"kg"}, Short: "Knowledge graph operations"}
 
 var kgEntitiesCmd = &cobra.Command{Use: "entities", Short: "Manage knowledge graph entities"}
 
@@ -155,4 +155,5 @@ func init() {
 
 	kgEntitiesCmd.AddCommand(kgEntitiesListCmd, kgEntitiesGetCmd, kgEntitiesCreateCmd, kgEntitiesDeleteCmd)
 	kgCmd.AddCommand(kgEntitiesCmd, kgTraverseCmd, kgGraphCmd, kgStatsCmd)
+	rootCmd.AddCommand(kgCmd)
 }

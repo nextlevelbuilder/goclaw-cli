@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"net/url"
+
+	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/spf13/cobra"
 )
 

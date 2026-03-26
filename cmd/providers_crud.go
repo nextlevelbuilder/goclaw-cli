@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"net/url"
+
+	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -63,7 +64,7 @@ var providersUpdateCmd = &cobra.Command{
 				body[key] = v
 			}
 		}
-		_, err = c.Put("/v1/providers/"+args[0], body)
+		_, err = c.Put("/v1/providers/"+url.PathEscape(args[0]), body)
 		if err != nil {
 			return err
 		}
@@ -98,7 +99,7 @@ var providersVerifyCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Post("/v1/providers/"+args[0]+"/verify", nil)
+		data, err := c.Post("/v1/providers/"+url.PathEscape(args[0])+"/verify", nil)
 		if err != nil {
 			return err
 		}

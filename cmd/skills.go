@@ -123,7 +123,7 @@ var skillsUpdateCmd = &cobra.Command{
 			v, _ := cmd.Flags().GetString("visibility")
 			body["visibility"] = v
 		}
-		_, err = c.Put("/v1/skills/"+args[0], body)
+		_, err = c.Put("/v1/skills/"+url.PathEscape(args[0]), body)
 		if err != nil {
 			return err
 		}
@@ -158,7 +158,7 @@ var skillsToggleCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Post("/v1/skills/"+args[0]+"/toggle", nil)
+		_, err = c.Post("/v1/skills/"+url.PathEscape(args[0])+"/toggle", nil)
 		if err != nil {
 			return err
 		}

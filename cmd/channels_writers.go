@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"net/url"
+
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +33,7 @@ var channelsWritersAddCmd = &cobra.Command{
 		}
 		user, _ := cmd.Flags().GetString("user")
 		displayName, _ := cmd.Flags().GetString("display-name")
-		_, err = c.Post("/v1/channels/instances/"+args[0]+"/writers",
+		_, err = c.Post("/v1/channels/instances/"+url.PathEscape(args[0])+"/writers",
 			buildBody("user_id", user, "display_name", displayName))
 		if err != nil {
 			return err

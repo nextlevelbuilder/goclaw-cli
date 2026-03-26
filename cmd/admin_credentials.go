@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"net/url"
+
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
-	"net/url"
 	"github.com/spf13/cobra"
 )
 
@@ -78,7 +79,7 @@ var credentialsUpdateCmd = &cobra.Command{
 			v, _ := cmd.Flags().GetString("name")
 			body["name"] = v
 		}
-		_, err = c.Put("/v1/cli-credentials/"+args[0], body)
+		_, err = c.Put("/v1/cli-credentials/"+url.PathEscape(args[0]), body)
 		if err != nil {
 			return err
 		}
@@ -113,7 +114,7 @@ var credentialsTestCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Post("/v1/cli-credentials/"+args[0]+"/test", nil)
+		data, err := c.Post("/v1/cli-credentials/"+url.PathEscape(args[0])+"/test", nil)
 		if err != nil {
 			return err
 		}

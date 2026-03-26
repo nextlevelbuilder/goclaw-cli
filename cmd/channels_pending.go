@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"net/url"
+
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +31,7 @@ var channelsPendingRetryCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Patch("/v1/channels/"+args[0]+"/pending/"+args[1], map[string]any{"action": "retry"})
+		_, err = c.Patch("/v1/channels/"+url.PathEscape(args[0])+"/pending/"+url.PathEscape(args[1]), map[string]any{"action": "retry"})
 		if err != nil {
 			return err
 		}

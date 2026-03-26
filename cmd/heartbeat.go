@@ -43,9 +43,15 @@ var heartbeatSetCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		interval, _ := cmd.Flags().GetInt("interval")
-		url, _ := cmd.Flags().GetString("url")
-		params := buildBody("interval", interval, "url", url)
+		params := map[string]any{}
+		if cmd.Flags().Changed("interval") {
+			interval, _ := cmd.Flags().GetInt("interval")
+			params["interval"] = interval
+		}
+		if cmd.Flags().Changed("url") {
+			u, _ := cmd.Flags().GetString("url")
+			params["url"] = u
+		}
 		data, err := ws.Call("heartbeat.set", params)
 		if err != nil {
 			return err

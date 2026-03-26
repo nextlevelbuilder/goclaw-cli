@@ -3,9 +3,10 @@ package cmd
 import (
 	"fmt"
 
+	"net/url"
+
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
-	"net/url"
 	"github.com/spf13/cobra"
 )
 
@@ -81,7 +82,7 @@ var agentsLinksUpdateCmd = &cobra.Command{
 			v, _ := cmd.Flags().GetInt("max-concurrent")
 			body["max_concurrent"] = v
 		}
-		_, err = c.Put("/v1/agents/links/"+args[0], body)
+		_, err = c.Put("/v1/agents/links/"+url.PathEscape(args[0]), body)
 		if err != nil {
 			return err
 		}

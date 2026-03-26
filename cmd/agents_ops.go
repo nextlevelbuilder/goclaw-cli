@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"net/url"
+
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +20,7 @@ var agentsShareCmd = &cobra.Command{
 		userID, _ := cmd.Flags().GetString("user")
 		role, _ := cmd.Flags().GetString("role")
 		body := buildBody("user_id", userID, "role", role)
-		_, err = c.Post("/v1/agents/"+args[0]+"/shares", body)
+		_, err = c.Post("/v1/agents/"+url.PathEscape(args[0])+"/shares", body)
 		if err != nil {
 			return err
 		}
@@ -56,7 +57,7 @@ var agentsRegenerateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Post("/v1/agents/"+args[0]+"/regenerate", nil)
+		_, err = c.Post("/v1/agents/"+url.PathEscape(args[0])+"/regenerate", nil)
 		if err != nil {
 			return err
 		}
@@ -74,7 +75,7 @@ var agentsResummonCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Post("/v1/agents/"+args[0]+"/resummon", nil)
+		_, err = c.Post("/v1/agents/"+url.PathEscape(args[0])+"/resummon", nil)
 		if err != nil {
 			return err
 		}

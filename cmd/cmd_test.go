@@ -73,6 +73,7 @@ func TestRootHelp(t *testing.T) {
 	rootCmd.SetOut(buf)
 	rootCmd.SetErr(buf)
 	rootCmd.SetArgs([]string{"--help"})
+	t.Cleanup(func() { rootCmd.SetArgs(nil) })
 
 	err := rootCmd.Execute()
 	if err != nil {

@@ -3,9 +3,10 @@ package cmd
 import (
 	"fmt"
 
+	"net/url"
+
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
-	"net/url"
 	"github.com/spf13/cobra"
 )
 
@@ -122,7 +123,7 @@ var agentsUpdateCmd = &cobra.Command{
 		if len(body) == 0 {
 			return fmt.Errorf("no fields to update — use flags like --name, --model, etc.")
 		}
-		_, err = c.Put("/v1/agents/"+args[0], body)
+		_, err = c.Put("/v1/agents/"+url.PathEscape(args[0]), body)
 		if err != nil {
 			return err
 		}

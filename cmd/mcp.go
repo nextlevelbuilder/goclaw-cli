@@ -106,7 +106,7 @@ var mcpServersUpdateCmd = &cobra.Command{
 			v, _ := cmd.Flags().GetInt("timeout")
 			body["timeout_sec"] = v
 		}
-		_, err = c.Put("/v1/mcp/servers/"+args[0], body)
+		_, err = c.Put("/v1/mcp/servers/"+url.PathEscape(args[0]), body)
 		if err != nil {
 			return err
 		}
@@ -141,7 +141,7 @@ var mcpServersTestCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Post("/v1/mcp/servers/"+args[0]+"/test", nil)
+		data, err := c.Post("/v1/mcp/servers/"+url.PathEscape(args[0])+"/test", nil)
 		if err != nil {
 			return err
 		}
@@ -291,7 +291,7 @@ var mcpRequestsReviewCmd = &cobra.Command{
 			return err
 		}
 		action, _ := cmd.Flags().GetString("action")
-		_, err = c.Post("/v1/mcp/requests/"+args[0]+"/review", map[string]any{"action": action})
+		_, err = c.Post("/v1/mcp/requests/"+url.PathEscape(args[0])+"/review", map[string]any{"action": action})
 		if err != nil {
 			return err
 		}

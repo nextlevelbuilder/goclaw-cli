@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"net/url"
+
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
-	"net/url"
 	"github.com/spf13/cobra"
 )
 
@@ -95,7 +96,7 @@ var channelsInstancesUpdateCmd = &cobra.Command{
 			v, _ := cmd.Flags().GetBool("enabled")
 			body["enabled"] = v
 		}
-		_, err = c.Put("/v1/channels/instances/"+args[0], body)
+		_, err = c.Put("/v1/channels/instances/"+url.PathEscape(args[0]), body)
 		if err != nil {
 			return err
 		}
