@@ -20,7 +20,9 @@ var memoryListCmd = &cobra.Command{
 		}
 		path := "/v1/memory/" + url.PathEscape(args[0])
 		if v, _ := cmd.Flags().GetString("user"); v != "" {
-			path += "?user_id=" + v
+			q := url.Values{}
+			q.Set("user_id", v)
+			path += "?" + q.Encode()
 		}
 		data, err := c.Get(path)
 		if err != nil {
@@ -125,7 +127,9 @@ var kgQueryCmd = &cobra.Command{
 		}
 		path := "/v1/knowledge-graph/" + url.PathEscape(args[0])
 		if v, _ := cmd.Flags().GetString("entity"); v != "" {
-			path += "?entity=" + v
+			q := url.Values{}
+			q.Set("entity", v)
+			path += "?" + q.Encode()
 		}
 		data, err := c.Get(path)
 		if err != nil {

@@ -24,7 +24,9 @@ var channelsInstancesListCmd = &cobra.Command{
 		}
 		path := "/v1/channels/instances"
 		if v, _ := cmd.Flags().GetString("type"); v != "" {
-			path += "?channel_type=" + v
+			q := url.Values{}
+			q.Set("channel_type", v)
+			path += "?" + q.Encode()
 		}
 		data, err := c.Get(path)
 		if err != nil {

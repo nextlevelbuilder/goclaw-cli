@@ -31,7 +31,9 @@ var channelsContactsResolveCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/contacts/resolve?ids=" + url.PathEscape(args[0]))
+		q := url.Values{}
+		q.Set("ids", args[0])
+		data, err := c.Get("/v1/contacts/resolve?" + q.Encode())
 		if err != nil {
 			return err
 		}
