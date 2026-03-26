@@ -15,6 +15,7 @@ import (
 type HTTPClient struct {
 	BaseURL    string
 	Token      string
+	TenantID   string // X-GoClaw-Tenant-Id header value
 	HTTPClient *http.Client
 	Verbose    bool
 }
@@ -78,6 +79,9 @@ func (c *HTTPClient) PostRaw(path string, contentType string, body io.Reader) (*
 	if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)
 	}
+	if c.TenantID != "" {
+		req.Header.Set("X-GoClaw-Tenant-Id", c.TenantID)
+	}
 	return c.HTTPClient.Do(req)
 }
 
@@ -90,6 +94,9 @@ func (c *HTTPClient) GetRaw(path string) (*http.Response, error) {
 	}
 	if c.Token != "" {
 		req.Header.Set("Authorization", "Bearer "+c.Token)
+	}
+	if c.TenantID != "" {
+		req.Header.Set("X-GoClaw-Tenant-Id", c.TenantID)
 	}
 	return c.HTTPClient.Do(req)
 }
@@ -142,6 +149,9 @@ func (c *HTTPClient) do(method, path string, body any) (json.RawMessage, error) 
 		}
 		if c.Token != "" {
 			req.Header.Set("Authorization", "Bearer "+c.Token)
+		}
+		if c.TenantID != "" {
+			req.Header.Set("X-GoClaw-Tenant-Id", c.TenantID)
 		}
 
 		resp, err = c.HTTPClient.Do(req)

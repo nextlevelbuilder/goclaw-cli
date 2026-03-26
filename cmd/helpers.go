@@ -17,7 +17,9 @@ func newHTTP() (*client.HTTPClient, error) {
 	if cfg.Token == "" {
 		return nil, client.ErrNotAuthenticated
 	}
-	return client.NewHTTPClient(cfg.Server, cfg.Token, cfg.Insecure), nil
+	c := client.NewHTTPClient(cfg.Server, cfg.Token, cfg.Insecure)
+	c.TenantID = cfg.TenantID
+	return c, nil
 }
 
 // newWS creates an authenticated WebSocket client.

@@ -48,4 +48,5 @@ func init() {
 	pf.Bool("insecure", false, "Skip TLS certificate verification")
 	pf.BoolP("verbose", "v", false, "Enable verbose/debug output")
 	pf.String("profile", "", "Config profile to use (default: active profile)")
+	pf.String("tenant-id", "", "Tenant ID for multi-tenant operations (env: GOCLAW_TENANT_ID)")
 }

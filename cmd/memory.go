@@ -18,9 +18,11 @@ var memoryListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/v1/memory/" + args[0]
+		path := "/v1/memory/" + url.PathEscape(args[0])
 		if v, _ := cmd.Flags().GetString("user"); v != "" {
-			path += "?user_id=" + v
+			q := url.Values{}
+			q.Set("user_id", v)
+			path += "?" + q.Encode()
 		}
 		data, err := c.Get(path)
 		if err != nil {
@@ -105,7 +107,7 @@ var memorySearchCmd = &cobra.Command{
 		query, _ := cmd.Flags().GetString("query")
 		user, _ := cmd.Flags().GetString("user")
 		body := buildBody("query", query, "user_id", user)
-		data, err := c.Post("/v1/memory/"+args[0]+"/search", body)
+		data, err := c.Post("/v1/memory/"+url.PathEscape(args[0])+"/search", body)
 		if err != nil {
 			return err
 		}
@@ -114,9 +116,7 @@ var memorySearchCmd = &cobra.Command{
 	},
 }
 
-// --- Knowledge Graph ---
-
-var kgCmd = &cobra.Command{Use: "knowledge-graph", Aliases: []string{"kg"}, Short: "Knowledge graph operations"}
+// --- Knowledge Graph (legacy query/extract/link — kgCmd declared in knowledge_graph.go) ---
 
 var kgQueryCmd = &cobra.Command{
 	Use: "query <agentID>", Short: "Query knowledge graph", Args: cobra.ExactArgs(1),
@@ -125,9 +125,11 @@ var kgQueryCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/v1/knowledge-graph/" + args[0]
+		path := "/v1/knowledge-graph/" + url.PathEscape(args[0])
 		if v, _ := cmd.Flags().GetString("entity"); v != "" {
-			path += "?entity=" + v
+			q := url.Values{}
+			q.Set("entity", v)
+			path += "?" + q.Encode()
 		}
 		data, err := c.Get(path)
 		if err != nil {
@@ -150,7 +152,7 @@ var kgExtractCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Post("/v1/knowledge-graph/"+args[0]+"/extract", map[string]any{"text": content})
+		data, err := c.Post("/v1/knowledge-graph/"+url.PathEscape(args[0])+"/extract", map[string]any{"text": content})
 		if err != nil {
 			return err
 		}
@@ -169,7 +171,7 @@ var kgLinkCmd = &cobra.Command{
 		from, _ := cmd.Flags().GetString("from")
 		to, _ := cmd.Flags().GetString("to")
 		relation, _ := cmd.Flags().GetString("relation")
-		_, err = c.Post("/v1/knowledge-graph/"+args[0]+"/link",
+		_, err = c.Post("/v1/knowledge-graph/"+url.PathEscape(args[0])+"/link",
 			map[string]any{"from": from, "to": to, "relation": relation})
 		if err != nil {
 			return err
@@ -198,6 +200,7 @@ func init() {
 	_ = kgLinkCmd.MarkFlagRequired("relation")
 
 	memoryCmd.AddCommand(memoryListCmd, memoryGetCmd, memoryStoreCmd, memoryDeleteCmd, memorySearchCmd)
+	// Legacy kg subcommands added to kgCmd (declared in knowledge_graph.go)
 	kgCmd.AddCommand(kgQueryCmd, kgExtractCmd, kgLinkCmd)
-	rootCmd.AddCommand(memoryCmd, kgCmd)
+	rootCmd.AddCommand(memoryCmd)
 }

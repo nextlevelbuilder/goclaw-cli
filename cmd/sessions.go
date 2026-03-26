@@ -63,7 +63,7 @@ var sessionsPreviewCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Post("/v1/sessions/"+args[0]+"/preview", nil)
+		data, err := c.Post("/v1/sessions/"+url.PathEscape(args[0])+"/preview", nil)
 		if err != nil {
 			return err
 		}
@@ -84,7 +84,7 @@ var sessionsDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Delete("/v1/sessions/" + args[0])
+		_, err = c.Delete("/v1/sessions/" + url.PathEscape(args[0]))
 		if err != nil {
 			return err
 		}
@@ -105,7 +105,7 @@ var sessionsResetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Post("/v1/sessions/"+args[0]+"/reset", nil)
+		_, err = c.Post("/v1/sessions/"+url.PathEscape(args[0])+"/reset", nil)
 		if err != nil {
 			return err
 		}
@@ -124,7 +124,7 @@ var sessionsLabelCmd = &cobra.Command{
 			return err
 		}
 		label, _ := cmd.Flags().GetString("label")
-		_, err = c.Patch("/v1/sessions/"+args[0], map[string]any{"label": label})
+		_, err = c.Patch("/v1/sessions/"+url.PathEscape(args[0]), map[string]any{"label": label})
 		if err != nil {
 			return err
 		}

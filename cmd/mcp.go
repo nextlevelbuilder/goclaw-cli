@@ -46,7 +46,7 @@ var mcpServersGetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/mcp/servers/" + args[0])
+		data, err := c.Get("/v1/mcp/servers/" + url.PathEscape(args[0]))
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ var mcpServersUpdateCmd = &cobra.Command{
 			v, _ := cmd.Flags().GetInt("timeout")
 			body["timeout_sec"] = v
 		}
-		_, err = c.Put("/v1/mcp/servers/"+args[0], body)
+		_, err = c.Put("/v1/mcp/servers/"+url.PathEscape(args[0]), body)
 		if err != nil {
 			return err
 		}
@@ -125,7 +125,7 @@ var mcpServersDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Delete("/v1/mcp/servers/" + args[0])
+		_, err = c.Delete("/v1/mcp/servers/" + url.PathEscape(args[0]))
 		if err != nil {
 			return err
 		}
@@ -141,7 +141,7 @@ var mcpServersTestCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Post("/v1/mcp/servers/"+args[0]+"/test", nil)
+		data, err := c.Post("/v1/mcp/servers/"+url.PathEscape(args[0])+"/test", nil)
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ var mcpServersToolsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/mcp/servers/" + args[0] + "/tools")
+		data, err := c.Get("/v1/mcp/servers/" + url.PathEscape(args[0]) + "/tools")
 		if err != nil {
 			return err
 		}
@@ -198,9 +198,9 @@ var mcpGrantsGrantCmd = &cobra.Command{
 		agent, _ := cmd.Flags().GetString("agent")
 		user, _ := cmd.Flags().GetString("user")
 		if agent != "" {
-			_, err = c.Post(fmt.Sprintf("/v1/mcp/servers/%s/grants/agent/%s", server, agent), nil)
+			_, err = c.Post(fmt.Sprintf("/v1/mcp/servers/%s/grants/agent/%s", url.PathEscape(server), url.PathEscape(agent)), nil)
 		} else if user != "" {
-			_, err = c.Post(fmt.Sprintf("/v1/mcp/servers/%s/grants/user/%s", server, user), nil)
+			_, err = c.Post(fmt.Sprintf("/v1/mcp/servers/%s/grants/user/%s", url.PathEscape(server), url.PathEscape(user)), nil)
 		} else {
 			return fmt.Errorf("specify --agent or --user")
 		}
@@ -223,9 +223,9 @@ var mcpGrantsRevokeCmd = &cobra.Command{
 		agent, _ := cmd.Flags().GetString("agent")
 		user, _ := cmd.Flags().GetString("user")
 		if agent != "" {
-			_, err = c.Delete(fmt.Sprintf("/v1/mcp/servers/%s/grants/agent/%s", server, agent))
+			_, err = c.Delete(fmt.Sprintf("/v1/mcp/servers/%s/grants/agent/%s", url.PathEscape(server), url.PathEscape(agent)))
 		} else if user != "" {
-			_, err = c.Delete(fmt.Sprintf("/v1/mcp/servers/%s/grants/user/%s", server, user))
+			_, err = c.Delete(fmt.Sprintf("/v1/mcp/servers/%s/grants/user/%s", url.PathEscape(server), url.PathEscape(user)))
 		} else {
 			return fmt.Errorf("specify --agent or --user")
 		}
@@ -291,7 +291,7 @@ var mcpRequestsReviewCmd = &cobra.Command{
 			return err
 		}
 		action, _ := cmd.Flags().GetString("action")
-		_, err = c.Post("/v1/mcp/requests/"+args[0]+"/review", map[string]any{"action": action})
+		_, err = c.Post("/v1/mcp/requests/"+url.PathEscape(args[0])+"/review", map[string]any{"action": action})
 		if err != nil {
 			return err
 		}
