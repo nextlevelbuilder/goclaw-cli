@@ -14,14 +14,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var skillsCmd = &cobra.Command{
-	Use:   "skills",
-	Short: "Manage skills",
-}
+var skillsCmd = &cobra.Command{Use: "skills", Short: "Manage skills"}
 
 var skillsListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all skills",
+	Use: "list", Short: "List all skills",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := newHTTP()
 		if err != nil {
@@ -54,15 +50,13 @@ var skillsListCmd = &cobra.Command{
 }
 
 var skillsGetCmd = &cobra.Command{
-	Use:   "get <id>",
-	Short: "Get skill details",
-	Args:  cobra.ExactArgs(1),
+	Use: "get <id>", Short: "Get skill details", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := newHTTP()
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/skills/" + args[0])
+		data, err := c.Get("/v1/skills/" + url.PathEscape(args[0]))
 		if err != nil {
 			return err
 		}
@@ -72,36 +66,26 @@ var skillsGetCmd = &cobra.Command{
 }
 
 var skillsUploadCmd = &cobra.Command{
-	Use:   "upload <path>",
-	Short: "Upload a skill from a directory or file",
-	Args:  cobra.ExactArgs(1),
+	Use: "upload <path>", Short: "Upload a skill from a directory or file", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := newHTTP()
 		if err != nil {
 			return err
 		}
-		skillPath := args[0]
-
-		// Create multipart upload
 		var buf bytes.Buffer
 		writer := multipart.NewWriter(&buf)
-
-		// Add file
-		file, err := os.Open(skillPath)
+		file, err := os.Open(args[0])
 		if err != nil {
 			return fmt.Errorf("open skill: %w", err)
 		}
 		defer file.Close()
-
-		part, err := writer.CreateFormFile("file", filepath.Base(skillPath))
+		part, err := writer.CreateFormFile("file", filepath.Base(args[0]))
 		if err != nil {
 			return err
 		}
 		if _, err := io.Copy(part, file); err != nil {
 			return err
 		}
-
-		// Add optional fields
 		if v, _ := cmd.Flags().GetString("name"); v != "" {
 			_ = writer.WriteField("name", v)
 		}
@@ -109,7 +93,6 @@ var skillsUploadCmd = &cobra.Command{
 			_ = writer.WriteField("visibility", v)
 		}
 		writer.Close()
-
 		resp, err := c.PostRaw("/v1/skills/upload", writer.FormDataContentType(), &buf)
 		if err != nil {
 			return err
@@ -125,9 +108,7 @@ var skillsUploadCmd = &cobra.Command{
 }
 
 var skillsUpdateCmd = &cobra.Command{
-	Use:   "update <id>",
-	Short: "Update a skill",
-	Args:  cobra.ExactArgs(1),
+	Use: "update <id>", Short: "Update a skill", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := newHTTP()
 		if err != nil {
@@ -152,9 +133,7 @@ var skillsUpdateCmd = &cobra.Command{
 }
 
 var skillsDeleteCmd = &cobra.Command{
-	Use:   "delete <id>",
-	Short: "Delete a skill",
-	Args:  cobra.ExactArgs(1),
+	Use: "delete <id>", Short: "Delete a skill", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !tui.Confirm("Delete this skill?", cfg.Yes) {
 			return nil
@@ -163,7 +142,7 @@ var skillsDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Delete("/v1/skills/" + args[0])
+		_, err = c.Delete("/v1/skills/" + url.PathEscape(args[0]))
 		if err != nil {
 			return err
 		}
@@ -173,9 +152,7 @@ var skillsDeleteCmd = &cobra.Command{
 }
 
 var skillsToggleCmd = &cobra.Command{
-	Use:   "toggle <id>",
-	Short: "Enable or disable a skill",
-	Args:  cobra.ExactArgs(1),
+	Use: "toggle <id>", Short: "Enable or disable a skill", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := newHTTP()
 		if err != nil {
@@ -190,163 +167,15 @@ var skillsToggleCmd = &cobra.Command{
 	},
 }
 
-var skillsGrantCmd = &cobra.Command{
-	Use:   "grant <id>",
-	Short: "Grant skill access to an agent or user",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		agent, _ := cmd.Flags().GetString("agent")
-		user, _ := cmd.Flags().GetString("user")
-		if agent != "" {
-			_, err = c.Post(fmt.Sprintf("/v1/skills/%s/grants/agent/%s", args[0], agent), nil)
-		} else if user != "" {
-			_, err = c.Post(fmt.Sprintf("/v1/skills/%s/grants/user/%s", args[0], user), nil)
-		} else {
-			return fmt.Errorf("specify --agent or --user")
-		}
-		if err != nil {
-			return err
-		}
-		printer.Success("Access granted")
-		return nil
-	},
-}
-
-var skillsRevokeCmd = &cobra.Command{
-	Use:   "revoke <id>",
-	Short: "Revoke skill access",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		agent, _ := cmd.Flags().GetString("agent")
-		user, _ := cmd.Flags().GetString("user")
-		if agent != "" {
-			_, err = c.Delete(fmt.Sprintf("/v1/skills/%s/grants/agent/%s", args[0], agent))
-		} else if user != "" {
-			_, err = c.Delete(fmt.Sprintf("/v1/skills/%s/grants/user/%s", args[0], user))
-		} else {
-			return fmt.Errorf("specify --agent or --user")
-		}
-		if err != nil {
-			return err
-		}
-		printer.Success("Access revoked")
-		return nil
-	},
-}
-
-var skillsVersionsCmd = &cobra.Command{
-	Use:   "versions <id>",
-	Short: "List skill versions",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		data, err := c.Get("/v1/skills/" + args[0] + "/versions")
-		if err != nil {
-			return err
-		}
-		printer.Print(unmarshalList(data))
-		return nil
-	},
-}
-
-var skillsRuntimesCmd = &cobra.Command{
-	Use:   "runtimes",
-	Short: "List available skill runtimes",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		data, err := c.Get("/v1/skills/runtimes")
-		if err != nil {
-			return err
-		}
-		printer.Print(unmarshalList(data))
-		return nil
-	},
-}
-
-var skillsFilesCmd = &cobra.Command{
-	Use:   "files <id>",
-	Short: "Browse skill files",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		p, _ := cmd.Flags().GetString("path")
-		if p == "" {
-			p = "."
-		}
-		data, err := c.Get(fmt.Sprintf("/v1/skills/%s/files/%s", args[0], url.PathEscape(p)))
-		if err != nil {
-			return err
-		}
-		printer.Print(unmarshalMap(data))
-		return nil
-	},
-}
-
-var skillsRescanDepsCmd = &cobra.Command{
-	Use:   "rescan-deps",
-	Short: "Rescan skill dependencies",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		_, err = c.Post("/v1/skills/rescan-deps", nil)
-		if err != nil {
-			return err
-		}
-		printer.Success("Dependencies rescanned")
-		return nil
-	},
-}
-
-var skillsInstallDepsCmd = &cobra.Command{
-	Use:   "install-deps",
-	Short: "Install skill dependencies",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		_, err = c.Post("/v1/skills/install-deps", nil)
-		if err != nil {
-			return err
-		}
-		printer.Success("Dependencies installed")
-		return nil
-	},
-}
-
 func init() {
 	skillsListCmd.Flags().String("search", "", "Search query")
 	skillsUploadCmd.Flags().String("name", "", "Skill name")
 	skillsUploadCmd.Flags().String("visibility", "private", "Visibility: private, shared")
 	skillsUpdateCmd.Flags().String("name", "", "Skill name")
 	skillsUpdateCmd.Flags().String("visibility", "", "Visibility")
-	skillsGrantCmd.Flags().String("agent", "", "Agent ID")
-	skillsGrantCmd.Flags().String("user", "", "User ID")
-	skillsRevokeCmd.Flags().String("agent", "", "Agent ID")
-	skillsRevokeCmd.Flags().String("user", "", "User ID")
-	skillsFilesCmd.Flags().String("path", "", "Sub-path to browse")
 
+	// grants, versions, files, deps, config registered from their own files
 	skillsCmd.AddCommand(skillsListCmd, skillsGetCmd, skillsUploadCmd, skillsUpdateCmd,
-		skillsDeleteCmd, skillsToggleCmd, skillsGrantCmd, skillsRevokeCmd,
-		skillsVersionsCmd, skillsRuntimesCmd, skillsFilesCmd, skillsRescanDepsCmd, skillsInstallDepsCmd)
+		skillsDeleteCmd, skillsToggleCmd)
 	rootCmd.AddCommand(skillsCmd)
 }

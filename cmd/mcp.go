@@ -46,7 +46,7 @@ var mcpServersGetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/mcp/servers/" + args[0])
+		data, err := c.Get("/v1/mcp/servers/" + url.PathEscape(args[0]))
 		if err != nil {
 			return err
 		}
@@ -125,7 +125,7 @@ var mcpServersDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Delete("/v1/mcp/servers/" + args[0])
+		_, err = c.Delete("/v1/mcp/servers/" + url.PathEscape(args[0]))
 		if err != nil {
 			return err
 		}
@@ -157,7 +157,7 @@ var mcpServersToolsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/mcp/servers/" + args[0] + "/tools")
+		data, err := c.Get("/v1/mcp/servers/" + url.PathEscape(args[0]) + "/tools")
 		if err != nil {
 			return err
 		}

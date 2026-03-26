@@ -84,7 +84,7 @@ var sessionsDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Delete("/v1/sessions/" + args[0])
+		_, err = c.Delete("/v1/sessions/" + url.PathEscape(args[0]))
 		if err != nil {
 			return err
 		}

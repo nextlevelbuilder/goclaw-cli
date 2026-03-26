@@ -110,10 +110,68 @@ var storageSizeCmd = &cobra.Command{
 	},
 }
 
+var storageDownloadCmd = &cobra.Command{
+	Use: "download <path>", Short: "Download a file (forced download)", Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		outFile, _ := cmd.Flags().GetString("output")
+		resp, err := c.GetRaw("/v1/storage/" + url.PathEscape(args[0]) + "?download=true")
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		var w io.Writer = os.Stdout
+		if outFile != "" {
+			f, err := os.Create(outFile)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			w = f
+		}
+		n, err := io.Copy(w, resp.Body)
+		if err != nil {
+			return err
+		}
+		if outFile != "" {
+			printer.Success(fmt.Sprintf("Downloaded %d bytes to %s", n, outFile))
+		}
+		return nil
+	},
+}
+
+var storageMoveCmd = &cobra.Command{
+	Use: "move", Short: "Move a file to a new path",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		from, _ := cmd.Flags().GetString("from")
+		to, _ := cmd.Flags().GetString("to")
+		_, err = c.Put("/v1/storage/move", map[string]any{"from": from, "to": to})
+		if err != nil {
+			return err
+		}
+		printer.Success("File moved")
+		return nil
+	},
+}
+
 func init() {
 	storageListCmd.Flags().String("path", "", "Sub-directory")
 	storageGetCmd.Flags().StringP("output", "f", "", "Output file (default: stdout)")
+	storageDownloadCmd.Flags().StringP("output", "f", "", "Output file (default: stdout)")
+	storageMoveCmd.Flags().String("from", "", "Source path")
+	storageMoveCmd.Flags().String("to", "", "Destination path")
+	_ = storageMoveCmd.MarkFlagRequired("from")
+	_ = storageMoveCmd.MarkFlagRequired("to")
 
-	storageCmd.AddCommand(storageListCmd, storageGetCmd, storageDeleteCmd, storageSizeCmd)
+	storageCmd.AddCommand(storageListCmd, storageGetCmd, storageDeleteCmd, storageSizeCmd,
+		storageDownloadCmd, storageMoveCmd)
 	rootCmd.AddCommand(storageCmd)
 }

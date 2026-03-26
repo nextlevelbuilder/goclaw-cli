@@ -203,9 +203,91 @@ func chatInteractive(agentKey, session string) error {
 	return nil
 }
 
+var chatInjectCmd = &cobra.Command{
+	Use:   "inject <agent>",
+	Short: "Inject message into running session",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ws, err := newWS("cli")
+		if err != nil {
+			return err
+		}
+		if _, err := ws.Connect(); err != nil {
+			return err
+		}
+		defer ws.Close()
+		text, _ := cmd.Flags().GetString("text")
+		session, _ := cmd.Flags().GetString("session")
+		params := buildBody("agent_key", args[0], "text", text, "session_key", session)
+		data, err := ws.Call("chat.inject", params)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
+var chatStatusCmd = &cobra.Command{
+	Use:   "status <agent>",
+	Short: "Get session/run status",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ws, err := newWS("cli")
+		if err != nil {
+			return err
+		}
+		if _, err := ws.Connect(); err != nil {
+			return err
+		}
+		defer ws.Close()
+		session, _ := cmd.Flags().GetString("session")
+		params := buildBody("agent_key", args[0], "session_key", session)
+		data, err := ws.Call("chat.session.status", params)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
+var chatAbortCmd = &cobra.Command{
+	Use:   "abort <agent>",
+	Short: "Abort running agent",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ws, err := newWS("cli")
+		if err != nil {
+			return err
+		}
+		if _, err := ws.Connect(); err != nil {
+			return err
+		}
+		defer ws.Close()
+		session, _ := cmd.Flags().GetString("session")
+		params := buildBody("agent_key", args[0], "session_key", session)
+		data, err := ws.Call("chat.abort", params)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
 func init() {
 	chatCmd.Flags().StringP("message", "m", "", "Message to send (single-shot mode)")
 	chatCmd.Flags().String("session", "", "Session key to continue")
 	chatCmd.Flags().Bool("no-stream", false, "Disable streaming, wait for full response")
+
+	chatInjectCmd.Flags().String("text", "", "Text to inject")
+	chatInjectCmd.Flags().String("session", "", "Session key")
+	_ = chatInjectCmd.MarkFlagRequired("text")
+
+	chatStatusCmd.Flags().String("session", "", "Session key")
+	chatAbortCmd.Flags().String("session", "", "Session key")
+
+	chatCmd.AddCommand(chatInjectCmd, chatStatusCmd, chatAbortCmd)
 	rootCmd.AddCommand(chatCmd)
 }

@@ -15,6 +15,7 @@ type Config struct {
 	Token        string `yaml:"token"`
 	OutputFormat string `yaml:"output"`
 	Profile      string `yaml:"profile"`
+	TenantID     string `yaml:"-"` // never persisted — flag/env only
 	Insecure     bool   `yaml:"insecure"`
 	Verbose      bool   `yaml:"verbose"`
 	Yes          bool   `yaml:"-"` // never persisted
@@ -99,6 +100,14 @@ func Load(cmd *cobra.Command) (*Config, error) {
 		cfg.Verbose, _ = cmd.Flags().GetBool("verbose")
 	}
 	cfg.Yes, _ = cmd.Flags().GetBool("yes")
+
+	// Tenant ID: env then flag override
+	if v := os.Getenv("GOCLAW_TENANT_ID"); v != "" {
+		cfg.TenantID = v
+	}
+	if cmd.Flags().Changed("tenant-id") {
+		cfg.TenantID, _ = cmd.Flags().GetString("tenant-id")
+	}
 
 	return cfg, nil
 }

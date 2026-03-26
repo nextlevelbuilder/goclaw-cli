@@ -76,13 +76,11 @@ var configPatchCmd = &cobra.Command{
 		defer ws.Close()
 		key, _ := cmd.Flags().GetString("key")
 		value, _ := cmd.Flags().GetString("value")
-
 		// Try to parse value as JSON, fall back to string
 		var parsedVal any
 		if err := json.Unmarshal([]byte(value), &parsedVal); err != nil {
 			parsedVal = value
 		}
-
 		_, err = ws.Call("config.patch", map[string]any{"key": key, "value": parsedVal})
 		if err != nil {
 			return err
@@ -121,6 +119,7 @@ func init() {
 	_ = configPatchCmd.MarkFlagRequired("key")
 	_ = configPatchCmd.MarkFlagRequired("value")
 
+	// permissions registered from config_permissions.go
 	configCmd.AddCommand(configGetCmd, configApplyCmd, configPatchCmd, configSchemaCmd)
 	rootCmd.AddCommand(configCmd)
 }

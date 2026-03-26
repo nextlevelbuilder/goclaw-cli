@@ -53,31 +53,37 @@ echo "Analyze this log" | goclaw chat myagent
 | Command | Description |
 |---------|-------------|
 | `auth` | Login, logout, device pairing, profile management |
-| `agents` | CRUD, shares, delegation links, per-user instances |
-| `chat` | Interactive or single-shot messaging with streaming |
+| `agents` | CRUD, shares, delegation links, per-user instances, wait |
+| `chat` | Interactive/single-shot messaging, inject, status, abort |
 | `sessions` | List, preview, delete, reset, label |
-| `skills` | Upload, manage, grant/revoke access |
+| `skills` | Upload, manage, grant/revoke, versions, files, tenant-config, deps, runtimes |
 | `mcp` | MCP server management, grants, access requests |
-| `providers` | LLM provider CRUD, model listing, verification |
-| `tools` | Custom + built-in tool management, invocation |
+| `providers` | LLM provider CRUD, model listing, verification, embedding status |
+| `tools` | Builtin tool management, tenant-config |
 | `cron` | Scheduled jobs CRUD, trigger, run history |
-| `teams` | Team management, task board, workspace |
-| `channels` | Channel instances, contacts, pending messages |
+| `teams` | Team management, task board, task approval, workspace, events |
+| `channels` | Channel instances, contacts, pending messages, writers |
 | `traces` | LLM trace viewer, export |
 | `memory` | Memory documents, semantic search |
-| `knowledge-graph` | Entity extraction, linking, querying |
-| `usage` | Usage analytics and cost breakdown |
-| `config` | Server configuration get/apply/patch |
+| `knowledge-graph` | Entity extraction, linking, querying, traversal |
+| `usage` | Usage analytics, cost breakdown, timeseries |
+| `config` | Server configuration get/apply/patch, permissions |
 | `logs` | Real-time log streaming |
-| `storage` | Workspace file browser |
+| `storage` | Workspace file browser, download, move |
 | `approvals` | Execution approval management |
 | `delegations` | Delegation history |
-| `credentials` | CLI credential store |
-| `tts` | Text-to-speech operations |
+| `credentials` | CLI credential store, presets, testing |
+| `tts` | Text-to-speech operations, convert |
 | `media` | Media upload/download |
 | `activity` | Audit log |
 | `api-keys` | API key management (create, list, revoke) |
 | `api-docs` | API documentation (Swagger UI, OpenAPI spec) |
+| `tenants` | Tenant CRUD, user management (admin) |
+| `system-config` | Per-tenant key-value configuration |
+| `packages` | Package management, runtimes |
+| `contacts` | Contact resolution, merge/unmerge |
+| `pending-messages` | Pending message management |
+| `heartbeat` | Health monitoring, checklist, targets |
 
 ## API Keys
 
@@ -126,6 +132,24 @@ export GOCLAW_TOKEN=your-token
 goclaw agents list
 ```
 
+## Multi-Tenant
+
+All commands support tenant context via the `--tenant-id` flag:
+
+```bash
+# Set tenant context for all operations
+goclaw agents list --tenant-id my-tenant
+
+# Or via environment variable
+export GOCLAW_TENANT_ID=my-tenant
+goclaw agents list
+
+# Manage tenants (admin only)
+goclaw tenants list
+goclaw tenants create --name "My Tenant"
+goclaw tenants users list <tenant-id>
+```
+
 ## Configuration
 
 Config stored in `~/.goclaw/config.yaml`:
@@ -140,6 +164,14 @@ profiles:
     server: https://staging.goclaw.example.com
     token: staging-token
 ```
+
+Environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `GOCLAW_SERVER` | Server URL |
+| `GOCLAW_TOKEN` | Auth token or API key |
+| `GOCLAW_TENANT_ID` | Tenant ID for multi-tenant operations |
 
 Switch profiles:
 
