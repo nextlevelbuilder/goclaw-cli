@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/spf13/cobra"
 )
@@ -16,9 +17,9 @@ var skillsGrantCmd = &cobra.Command{
 		agent, _ := cmd.Flags().GetString("agent")
 		user, _ := cmd.Flags().GetString("user")
 		if agent != "" {
-			_, err = c.Post(fmt.Sprintf("/v1/skills/%s/grants/agent/%s", args[0], agent), nil)
+			_, err = c.Post(fmt.Sprintf("/v1/skills/%s/grants/agent/%s", url.PathEscape(args[0]), url.PathEscape(agent)), nil)
 		} else if user != "" {
-			_, err = c.Post(fmt.Sprintf("/v1/skills/%s/grants/user/%s", args[0], user), nil)
+			_, err = c.Post(fmt.Sprintf("/v1/skills/%s/grants/user/%s", url.PathEscape(args[0]), url.PathEscape(user)), nil)
 		} else {
 			return fmt.Errorf("specify --agent or --user")
 		}
@@ -40,9 +41,9 @@ var skillsRevokeCmd = &cobra.Command{
 		agent, _ := cmd.Flags().GetString("agent")
 		user, _ := cmd.Flags().GetString("user")
 		if agent != "" {
-			_, err = c.Delete(fmt.Sprintf("/v1/skills/%s/grants/agent/%s", args[0], agent))
+			_, err = c.Delete(fmt.Sprintf("/v1/skills/%s/grants/agent/%s", url.PathEscape(args[0]), url.PathEscape(agent)))
 		} else if user != "" {
-			_, err = c.Delete(fmt.Sprintf("/v1/skills/%s/grants/user/%s", args[0], user))
+			_, err = c.Delete(fmt.Sprintf("/v1/skills/%s/grants/user/%s", url.PathEscape(args[0]), url.PathEscape(user)))
 		} else {
 			return fmt.Errorf("specify --agent or --user")
 		}

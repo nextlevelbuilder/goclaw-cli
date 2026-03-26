@@ -43,7 +43,9 @@ var agentsInstancesGetFileCmd = &cobra.Command{
 		}
 		user, _ := cmd.Flags().GetString("user")
 		file, _ := cmd.Flags().GetString("file")
-		data, err := c.Get(fmt.Sprintf("/v1/agents/%s/instances/%s/files/%s", args[0], user, file))
+		// file may contain path separators — don't escape it
+		data, err := c.Get(fmt.Sprintf("/v1/agents/%s/instances/%s/files/%s",
+			url.PathEscape(args[0]), url.PathEscape(user), file))
 		if err != nil {
 			return err
 		}
@@ -72,7 +74,9 @@ var agentsInstancesSetFileCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Put(fmt.Sprintf("/v1/agents/%s/instances/%s/files/%s", args[0], user, file),
+		// file may contain path separators — don't escape it
+		_, err = c.Put(fmt.Sprintf("/v1/agents/%s/instances/%s/files/%s",
+			url.PathEscape(args[0]), url.PathEscape(user), file),
 			map[string]any{"content": content})
 		if err != nil {
 			return err
@@ -98,7 +102,8 @@ var agentsInstancesMetadataCmd = &cobra.Command{
 			if err := json.Unmarshal([]byte(patch), &body); err != nil {
 				return fmt.Errorf("invalid JSON patch: %w", err)
 			}
-			_, err = c.Patch(fmt.Sprintf("/v1/agents/%s/instances/%s/metadata", args[0], user), body)
+			_, err = c.Patch(fmt.Sprintf("/v1/agents/%s/instances/%s/metadata",
+				url.PathEscape(args[0]), url.PathEscape(user)), body)
 			if err != nil {
 				return err
 			}

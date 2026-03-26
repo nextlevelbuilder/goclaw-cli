@@ -50,7 +50,7 @@ var skillsFilesCmd = &cobra.Command{
 		if p == "" {
 			p = "."
 		}
-		data, err := c.Get(fmt.Sprintf("/v1/skills/%s/files/%s", args[0], url.PathEscape(p)))
+		data, err := c.Get(fmt.Sprintf("/v1/skills/%s/files/%s", url.PathEscape(args[0]), url.PathEscape(p)))
 		if err != nil {
 			return err
 		}
