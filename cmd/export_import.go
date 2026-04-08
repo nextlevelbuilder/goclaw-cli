@@ -205,6 +205,26 @@ var exportSkillsCmd = &cobra.Command{
 	},
 }
 
+var importSkillsPreviewCmd = &cobra.Command{
+	Use: "skills-preview <file>", Short: "Preview skills import", Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		body, err := readJSONFile(args[0])
+		if err != nil {
+			return err
+		}
+		data, err := c.Post("/v1/skills/import/preview", body)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
 var importSkillsCmd = &cobra.Command{
 	Use: "skills <file>", Short: "Import skills from file", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -260,6 +280,26 @@ var exportMCPCmd = &cobra.Command{
 		}
 		defer resp.Body.Close()
 		return writeExportFile(resp.Body, outFile, "mcp-export.json")
+	},
+}
+
+var importMCPPreviewCmd = &cobra.Command{
+	Use: "mcp-preview <file>", Short: "Preview MCP servers import", Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		body, err := readJSONFile(args[0])
+		if err != nil {
+			return err
+		}
+		data, err := c.Post("/v1/mcp/import/preview", body)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
 	},
 }
 
@@ -328,6 +368,6 @@ func init() {
 	exportCmd.AddCommand(exportAgentPreviewCmd, exportAgentCmd, exportTeamPreviewCmd, exportTeamCmd,
 		exportSkillsPreviewCmd, exportSkillsCmd, exportMCPPreviewCmd, exportMCPCmd)
 	importCmd.AddCommand(importAgentPreviewCmd, importAgentCmd, importTeamPreviewCmd, importTeamCmd,
-		importSkillsCmd, importMCPCmd)
+		importSkillsPreviewCmd, importSkillsCmd, importMCPPreviewCmd, importMCPCmd)
 	rootCmd.AddCommand(exportCmd, importCmd)
 }

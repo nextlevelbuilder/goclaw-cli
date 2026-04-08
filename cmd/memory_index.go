@@ -3,6 +3,7 @@ package cmd
 import (
 	"net/url"
 
+	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +51,15 @@ var memoryChunksCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(unmarshalList(data))
+			return nil
+		}
+		tbl := output.NewTable("ID", "DOCUMENT", "CONTENT", "CREATED")
+		for _, ch := range unmarshalList(data) {
+			tbl.AddRow(str(ch, "id"), str(ch, "document_path"), str(ch, "content"), str(ch, "created_at"))
+		}
+		printer.Print(tbl)
 		return nil
 	},
 }

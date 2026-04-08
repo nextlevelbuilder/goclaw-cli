@@ -3,6 +3,8 @@ package cmd
 import (
 	"net/url"
 
+	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
+	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +37,15 @@ var kgDedupListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(unmarshalList(data))
+			return nil
+		}
+		tbl := output.NewTable("ID", "ENTITY_A", "ENTITY_B", "SCORE")
+		for _, r := range unmarshalList(data) {
+			tbl.AddRow(str(r, "id"), str(r, "entity_a"), str(r, "entity_b"), str(r, "score"))
+		}
+		printer.Print(tbl)
 		return nil
 	},
 }
@@ -61,6 +71,9 @@ var kgDedupDismissCmd = &cobra.Command{
 var kgMergeCmd = &cobra.Command{
 	Use: "merge <agent-id>", Short: "Merge KG entities", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if !tui.Confirm("Merge these KG entities?", cfg.Yes) {
+			return nil
+		}
 		c, err := newHTTP()
 		if err != nil {
 			return err
