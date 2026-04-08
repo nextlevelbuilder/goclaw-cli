@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +27,15 @@ var agentsFilesListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(unmarshalList(data))
+			return nil
+		}
+		tbl := output.NewTable("NAME", "SIZE", "UPDATED")
+		for _, f := range unmarshalList(data) {
+			tbl.AddRow(str(f, "name"), str(f, "size"), str(f, "updated_at"))
+		}
+		printer.Print(tbl)
 		return nil
 	},
 }

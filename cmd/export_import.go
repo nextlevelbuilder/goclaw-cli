@@ -127,6 +127,26 @@ var exportTeamCmd = &cobra.Command{
 	},
 }
 
+var importTeamPreviewCmd = &cobra.Command{
+	Use: "team-preview <file>", Short: "Preview team import", Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		body, err := readJSONFile(args[0])
+		if err != nil {
+			return err
+		}
+		data, err := c.Post("/v1/teams/import/preview", body)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
 var importTeamCmd = &cobra.Command{
 	Use: "team <file>", Short: "Import team from file", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -275,10 +295,13 @@ func writeExportFile(body io.Reader, outFile, defaultName string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
 	n, err := io.Copy(f, body)
 	if err != nil {
+		f.Close()
 		return err
+	}
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close export file: %w", err)
 	}
 	printer.Success(fmt.Sprintf("Exported %d bytes to %s", n, outFile))
 	return nil
@@ -299,11 +322,12 @@ func readJSONFile(path string) (any, error) {
 
 func init() {
 	for _, c := range []*cobra.Command{exportAgentCmd, exportTeamCmd, exportSkillsCmd, exportMCPCmd} {
-		c.Flags().StringP("output", "f", "", "Output file path")
+		c.Flags().StringP("output", "o", "", "Output file path")
 	}
 
 	exportCmd.AddCommand(exportAgentPreviewCmd, exportAgentCmd, exportTeamPreviewCmd, exportTeamCmd,
 		exportSkillsPreviewCmd, exportSkillsCmd, exportMCPPreviewCmd, exportMCPCmd)
-	importCmd.AddCommand(importAgentPreviewCmd, importAgentCmd, importTeamCmd, importSkillsCmd, importMCPCmd)
+	importCmd.AddCommand(importAgentPreviewCmd, importAgentCmd, importTeamPreviewCmd, importTeamCmd,
+		importSkillsCmd, importMCPCmd)
 	rootCmd.AddCommand(exportCmd, importCmd)
 }

@@ -47,7 +47,7 @@ var kgDedupDismissCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		ids, _ := cmd.Flags().GetString("ids")
+		ids, _ := cmd.Flags().GetStringSlice("ids")
 		data, err := c.Post("/v1/agents/"+url.PathEscape(args[0])+"/kg/dedup/dismiss",
 			map[string]any{"ids": ids})
 		if err != nil {
@@ -78,7 +78,7 @@ var kgMergeCmd = &cobra.Command{
 }
 
 func init() {
-	kgDedupDismissCmd.Flags().String("ids", "", "Comma-separated duplicate pair IDs")
+	kgDedupDismissCmd.Flags().StringSlice("ids", nil, "Duplicate pair IDs (comma-separated or repeated)")
 	_ = kgDedupDismissCmd.MarkFlagRequired("ids")
 	kgMergeCmd.Flags().String("source", "", "Source entity ID")
 	kgMergeCmd.Flags().String("target", "", "Target entity ID")

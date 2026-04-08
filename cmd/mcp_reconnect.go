@@ -17,7 +17,7 @@ var mcpServersReconnectCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Success("MCP server reconnecting")
+		printer.Success("MCP server reconnect triggered")
 		return nil
 	},
 }
