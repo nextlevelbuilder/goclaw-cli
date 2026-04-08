@@ -55,9 +55,9 @@ var memoryChunksCmd = &cobra.Command{
 			printer.Print(unmarshalList(data))
 			return nil
 		}
-		tbl := output.NewTable("ID", "DOCUMENT", "CONTENT", "CREATED")
+		tbl := output.NewTable("ID", "DOCUMENT", "SIZE", "CREATED")
 		for _, ch := range unmarshalList(data) {
-			tbl.AddRow(str(ch, "id"), str(ch, "document_path"), str(ch, "content"), str(ch, "created_at"))
+			tbl.AddRow(str(ch, "id"), str(ch, "document_path"), str(ch, "size"), str(ch, "created_at"))
 		}
 		printer.Print(tbl)
 		return nil
