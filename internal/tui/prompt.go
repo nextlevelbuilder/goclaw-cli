@@ -14,11 +14,19 @@ func IsInteractive() bool {
 	return term.IsTerminal(int(os.Stdin.Fd()))
 }
 
-// Confirm asks the user a yes/no question. Returns true if yes.
-// In non-interactive mode or if autoYes is true, returns true.
+// Confirm asks the user a yes/no question for a destructive operation.
+// Returns true only if autoYes=true OR the user explicitly types "y"/"yes".
+//
+// In non-interactive mode (no TTY) without autoYes, returns false to prevent
+// silent approval of destructive ops — AI tools and scripts MUST pass --yes
+// explicitly. This matches the AI-first ergonomics contract (see CLAUDE.md).
 func Confirm(msg string, autoYes bool) bool {
-	if autoYes || !IsInteractive() {
+	if autoYes {
 		return true
+	}
+	if !IsInteractive() {
+		fmt.Fprintln(os.Stderr, "goclaw: confirmation required for destructive op in non-interactive mode. Pass --yes to approve explicitly.")
+		return false
 	}
 	fmt.Printf("%s [y/N]: ", msg)
 	reader := bufio.NewReader(os.Stdin)
