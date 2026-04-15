@@ -1,0 +1,162 @@
+package cmd
+
+import (
+	"fmt"
+	"net/url"
+
+	"github.com/spf13/cobra"
+)
+
+// skills_misc.go holds skills grant/revoke, versions, files, rescan-deps, and
+// install-deps subcommands, extracted from skills.go to keep it under 200 LoC.
+
+var skillsGrantCmd = &cobra.Command{
+	Use:   "grant <id>",
+	Short: "Grant skill access to an agent or user",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		agent, _ := cmd.Flags().GetString("agent")
+		user, _ := cmd.Flags().GetString("user")
+		if agent != "" {
+			_, err = c.Post(fmt.Sprintf("/v1/skills/%s/grants/agent/%s", args[0], agent), nil)
+		} else if user != "" {
+			_, err = c.Post(fmt.Sprintf("/v1/skills/%s/grants/user/%s", args[0], user), nil)
+		} else {
+			return fmt.Errorf("specify --agent or --user")
+		}
+		if err != nil {
+			return err
+		}
+		printer.Success("Access granted")
+		return nil
+	},
+}
+
+var skillsRevokeCmd = &cobra.Command{
+	Use:   "revoke <id>",
+	Short: "Revoke skill access",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		agent, _ := cmd.Flags().GetString("agent")
+		user, _ := cmd.Flags().GetString("user")
+		if agent != "" {
+			_, err = c.Delete(fmt.Sprintf("/v1/skills/%s/grants/agent/%s", args[0], agent))
+		} else if user != "" {
+			_, err = c.Delete(fmt.Sprintf("/v1/skills/%s/grants/user/%s", args[0], user))
+		} else {
+			return fmt.Errorf("specify --agent or --user")
+		}
+		if err != nil {
+			return err
+		}
+		printer.Success("Access revoked")
+		return nil
+	},
+}
+
+var skillsVersionsCmd = &cobra.Command{
+	Use:   "versions <id>",
+	Short: "List skill versions",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		data, err := c.Get("/v1/skills/" + args[0] + "/versions")
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalList(data))
+		return nil
+	},
+}
+
+var skillsRuntimesCmd = &cobra.Command{
+	Use:   "runtimes",
+	Short: "List available skill runtimes",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		data, err := c.Get("/v1/skills/runtimes")
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalList(data))
+		return nil
+	},
+}
+
+var skillsFilesCmd = &cobra.Command{
+	Use:   "files <id>",
+	Short: "Browse skill files",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		p, _ := cmd.Flags().GetString("path")
+		if p == "" {
+			p = "."
+		}
+		data, err := c.Get(fmt.Sprintf("/v1/skills/%s/files/%s", args[0], url.PathEscape(p)))
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
+var skillsRescanDepsCmd = &cobra.Command{
+	Use:   "rescan-deps",
+	Short: "Rescan skill dependencies",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		_, err = c.Post("/v1/skills/rescan-deps", nil)
+		if err != nil {
+			return err
+		}
+		printer.Success("Dependencies rescanned")
+		return nil
+	},
+}
+
+var skillsInstallDepsCmd = &cobra.Command{
+	Use:   "install-deps",
+	Short: "Install all skill dependencies",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		_, err = c.Post("/v1/skills/install-deps", nil)
+		if err != nil {
+			return err
+		}
+		printer.Success("Dependencies installed")
+		return nil
+	},
+}
+
+func init() {
+	skillsGrantCmd.Flags().String("agent", "", "Agent ID")
+	skillsGrantCmd.Flags().String("user", "", "User ID")
+	skillsRevokeCmd.Flags().String("agent", "", "Agent ID")
+	skillsRevokeCmd.Flags().String("user", "", "User ID")
+	skillsFilesCmd.Flags().String("path", "", "Sub-path to browse")
+}
