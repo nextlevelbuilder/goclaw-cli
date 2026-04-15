@@ -25,6 +25,7 @@ type WSClient struct {
 	nextID    atomic.Int64
 	mu        sync.Mutex   // protects pending and listeners
 	writeMu   sync.Mutex   // protects concurrent writes (gorilla requirement)
+	closeOnce sync.Once    // guards Close against concurrent readLoop + caller invocation
 	pending   map[string]chan *WSResponse
 	listeners map[string][]func(*WSEvent)
 	done      chan struct{}
@@ -208,15 +209,14 @@ func (ws *WSClient) SetSenderID(id string) {
 }
 
 // Close shuts down the WebSocket connection.
+// Safe to call concurrently and multiple times (sync.Once-guarded).
 func (ws *WSClient) Close() {
-	select {
-	case <-ws.done:
-	default:
+	ws.closeOnce.Do(func() {
 		close(ws.done)
-	}
-	if ws.conn != nil {
-		ws.conn.Close()
-	}
+		if ws.conn != nil {
+			ws.conn.Close()
+		}
+	})
 }
 
 func (ws *WSClient) readLoop() {

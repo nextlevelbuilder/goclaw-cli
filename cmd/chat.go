@@ -13,6 +13,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// chat.go — send/abort + interactive mode. AI extensions → chat_ai_commands.go.
+
 var chatCmd = &cobra.Command{
 	Use:   "chat <agent> [message]",
 	Short: "Chat with an agent",
@@ -207,5 +209,6 @@ func init() {
 	chatCmd.Flags().StringP("message", "m", "", "Message to send (single-shot mode)")
 	chatCmd.Flags().String("session", "", "Session key to continue")
 	chatCmd.Flags().Bool("no-stream", false, "Disable streaming, wait for full response")
+	// AI-critical subcommands (history/inject/session-status) registered in chat_ai_commands.go
 	rootCmd.AddCommand(chatCmd)
 }
