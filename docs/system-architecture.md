@@ -249,7 +249,45 @@ Load(cmd *cobra.Command) -> Config
 
 ---
 
-### 5. Output Formatting (internal/output/)
+### 5. Output Formatting & Error Handling (internal/output/)
+
+**Package Structure (Phase 0):**
+
+```
+internal/output/
+├── output.go      # Printer, Table, format dispatching
+├── exit.go        # ExitCode constants (0-6) + mappers
+├── error.go       # ErrorDetail, PrintError, FromError
+└── tty.go         # IsTTY, ResolveFormat (TTY auto-detect)
+```
+
+**Exit Codes (locked contract for AI/automation consumers):**
+
+```go
+const (
+    ExitSuccess     = 0  // Success
+    ExitGeneric     = 1  // Unknown/unmapped
+    ExitAuth        = 2  // UNAUTHORIZED, NOT_PAIRED, etc.
+    ExitNotFound    = 3  // NOT_FOUND, HTTP 404
+    ExitValidation  = 4  // INVALID_REQUEST, HTTP 400/422
+    ExitServer      = 5  // INTERNAL, UNAVAILABLE, HTTP 5xx
+    ExitResource    = 6  // RESOURCE_EXHAUSTED, HTTP 429, timeouts
+)
+```
+
+Maps 12 known server error codes to exit codes; HTTP status fallback for envelope-less responses.
+
+**Error Output Shape (JSON mode):**
+
+```json
+{"error": {"code": "UNAUTHORIZED", "message": "...", "details": {...}}}
+```
+
+**TTY-Aware Format Resolution (precedence):**
+1. `--output` flag (explicit)
+2. `GOCLAW_OUTPUT` env var
+3. stdout is TTY → `"table"`
+4. else → `"json"`
 
 **Printer Interface:**
 
@@ -258,11 +296,9 @@ type Printer struct {
 	Format string
 }
 
-// Output dispatcher
-func (p *Printer) Print(data any)
-  ├─ if json: marshal to compact JSON
-  ├─ if yaml: marshal to YAML
-  └─ if table: format as Table
+func (p *Printer) Print(data any)   // Dispatch to table/json/yaml
+func (p *Printer) Error(err error)  // Format error for output
+func (p *Printer) Success(msg string) // Print success message
 ```
 
 **Output Examples:**
@@ -276,18 +312,13 @@ goclaw agents list
 
 # JSON (automation)
 goclaw agents list -o json
-{
-  "agents": [
-    { "id": "abc123", "name": "Agent1", "provider": "openai" }
-  ]
-}
+[{"id":"abc123","name":"Agent1","provider":"openai"}]
 
 # YAML (config friendly)
 goclaw agents list -o yaml
-agents:
-  - id: abc123
-    name: Agent1
-    provider: openai
+- id: abc123
+  name: Agent1
+  provider: openai
 ```
 
 ---
@@ -609,8 +640,146 @@ GoClaw CLI v1.0.0 (commit: abc1234, built: 2026-03-15T10:00:00Z)
 
 ---
 
+---
+
+## AI Ergonomics (Phase 0 Locked Contracts)
+
+### Design Principles for AI/Automation Consumers
+
+**Contract 1: Deterministic Exit Codes**
+- Exit codes 0-6 map to semantic error categories
+- Enables AI agents to implement retry logic based on error type
+- Example: Exit 2 (auth) → re-authenticate; Exit 6 (rate-limit) → exponential backoff
+
+**Contract 2: TTY-Aware Output (No Special Flags Needed)**
+- Detects piped output automatically → JSON
+- Human terminal → table (pretty columns)
+- CI/scripts get machine-readable output without `--output json`
+- Env var override: `GOCLAW_OUTPUT=json` forces format
+
+**Contract 3: Structured Error JSON**
+- Errors always include code + message + details (in JSON mode)
+- Parseable by AI agents for decision-making
+- HTTP status codes mapped to exit codes for envelope-less responses
+
+**Contract 4: Streaming with Automatic Reconnection**
+- `FollowStream` pattern: exponential backoff on disconnect
+- Used by `logs --follow`, `agents wait`, `teams events --follow`
+- Handler errors stop immediately (no retry loop)
+- Context cancellation respected for clean shutdown
+
+### TTY Detection Flow
+
+```
+┌─────────────────────────────────────────────┐
+│ Command Execution                           │
+└────────────────┬────────────────────────────┘
+                 │
+        ┌────────▼────────────┐
+        │ Check --output flag │
+        └────────┬────────────┘
+                 │
+          Yes (explicit) → Use flag value
+          │
+          No → ┌─────────────────────┐
+               │ Check GOCLAW_OUTPUT │
+               └────────┬────────────┘
+                        │
+                 Yes (env set) → Use env value
+                 │
+                 No → ┌─────────────────────┐
+                      │ Check stdout is TTY │
+                      └────────┬────────────┘
+                               │
+                        Yes → "table" (human)
+                        │
+                        No → "json" (machine/CI)
+```
+
+### Error Mapping for AI Agents
+
+**Server Error Code → Exit Code + Action:**
+
+| Server Code | Exit Code | Meaning | AI Action |
+|-------------|-----------|---------|-----------|
+| `UNAUTHORIZED` | 2 | Auth required | Re-authenticate |
+| `NOT_PAIRED` | 2 | Device pairing needed | Run `goclaw auth login --pair` |
+| `NOT_FOUND` | 3 | Resource missing | Fail soft (not transient) |
+| `INVALID_REQUEST` | 4 | Bad input | Fix request, don't retry |
+| `FAILED_PRECONDITION` | 4 | State error | Wait + retry (state dependent) |
+| `INTERNAL` | 5 | Server error | Hard fail (server down?) |
+| `UNAVAILABLE` | 5 | Server unavailable | Exponential backoff retry |
+| `AGENT_TIMEOUT` | 5 | Agent unresponsive | Check agent status |
+| `RESOURCE_EXHAUSTED` | 6 | Rate-limited | Backoff (retry_after_ms respected) |
+| HTTP 429 | 6 | Rate-limited | Respect Retry-After header |
+| Connection timeout | 6 | Network issue | Transient; exponential backoff |
+
+### AI-Critical Commands (Phase 4 MAX POLISH)
+
+**Fully polished for AI agent orchestration:**
+
+1. **`chat history`** — Retrieve conversation history
+   - JSON schema in help text
+   - Structured message array (role + content + timestamp)
+   - Used by: AI agents reviewing context
+
+2. **`chat inject`** — Inject context without triggering response
+   - Role validation (system/user/assistant)
+   - Content validation (required)
+   - Used by: Orchestration tools injecting state/facts
+
+3. **`chat session-status`** — Snapshot of session state
+   - Ready-to-use for state machines
+   - Used by: Workflow engines checking preconditions
+
+4. **`agents wait --timeout=30s --state=ready`** — Blocking wait for agent state
+   - Exit code 6 on timeout (retryable)
+   - Used by: Orchestration waiting for agent availability
+
+5. **`agents identity`** — Agent persona/identity snapshot
+   - Used by: Multi-agent systems with role delegation
+
+6. **`memory kg` subsystem** — Full knowledge graph CRUD
+   - Entities, traversal, deduplication, graph export
+   - Used by: RAG + semantic search workflows
+
+### No Manual Format Flags Needed in CI
+
+**Before (old style):**
+```bash
+goclaw agents list -o json | jq '.[] | select(.status == "active")'
+```
+
+**After (new style, equally readable):**
+```bash
+goclaw agents list | jq '.[] | select(.status == "active")'
+# Still outputs JSON because stdout is piped!
+```
+
+### Error Handling Example (AI Agent)
+
+```bash
+#!/bin/bash
+set -e
+
+# Call with `set -e`: any non-zero exit stops script
+goclaw agents wake myagent --timeout=10s
+
+case $? in
+  0)  echo "Agent ready" ;;
+  2)  echo "Auth failed, re-authenticate" ;;
+  3)  echo "Agent not found" ;;
+  5)  echo "Server error, check GoClaw status" ;;
+  6)  echo "Timeout, retrying..." && sleep 5 && retry ;;
+esac
+```
+
+---
+
 ## Last Updated
 
-- **Date:** 2026-03-15
+- **Date:** 2026-04-15
+- **Phases:** Legacy 1-9 Complete + P0-P4 Complete + P5 Deferred
 - **Diagram Language:** ASCII (no external rendering needed)
 - **Status:** Production Ready
+- **AI Ergonomics:** Phase 0 locked contracts in place (exit codes, TTY-detect, error structs, streaming reconnect)

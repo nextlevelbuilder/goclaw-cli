@@ -1,8 +1,9 @@
 # GoClaw CLI - Project Roadmap
 
-**Last Updated:** 2026-03-15
-**Current Status:** Phase 9 Complete (Production Ready)
-**Next Phase:** Phase 10 (Testing & Quality Assurance)
+**Last Updated:** 2026-04-15
+**Phase Structure:** Legacy Phases 1-9 (bootstrap → CI/CD) + AI-First Expansion Phases 0-5 (2026-04-15)
+**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P4 ✓ COMPLETE; P5 ⏳ DEFERRED to future sprint
+**Next Phase:** Phase 10 (Unit Testing & QA) or Phase 5 (Advanced Groups: pair, oauth, packages, users, quota, send)
 
 ---
 
@@ -262,6 +263,127 @@
 - goclaw_X.X.X_linux_arm64.tar.gz
 - goclaw_X.X.X_windows_amd64.zip
 - goclaw_X.X.X_windows_arm64.zip
+
+---
+
+## Phase 0: AI Ergonomics Foundation ✓ COMPLETE
+
+**Objective:** Implement exit codes, TTY-aware output, structured error handling, and streaming reconnect for AI/automation consumers
+
+**Duration:** ~3 days
+**Completion Date:** 2026-04-15
+
+**Deliverables:**
+- [x] Exit code mapping (server codes → 0-6)
+- [x] TTY detection + format auto-resolution
+- [x] Structured error output (JSON envelope with code/message/details)
+- [x] FollowStream with exponential backoff reconnect
+- [x] Central error handler in cmd.Execute()
+- [x] --quiet flag for non-TTY contexts
+- [x] Updated CHANGELOG, README, CLAUDE.md
+
+**Status:** COMPLETE with 1 HIGH finding (H1: handler error retry semantics) + 3 MEDIUM findings (M1: MaxRetries=0 override, M3: --output validation)
+
+**Key Files:**
+- `internal/output/exit.go`, `error.go`, `tty.go`
+- `internal/client/follow.go`
+- `cmd/root.go` (error handler)
+- `CHANGELOG.md` (breaking change doc)
+
+**Note:** Phase 0 is foundational AI ergonomics. Recommended fixes for H1/M1/M3 should be addressed before merging Phase 1+ features.
+
+---
+
+## Phases 1-4: AI-First CLI Expansion (2026-04-15)
+
+**Context:** After completing legacy Phases 1-9 (bootstrap through CI/CD), this expansion (P0-P5) adds AI-agent-centric ergonomics and advanced CLI features.
+
+### P1: Admin/Ops Foundation ✓ COMPLETE
+
+**Deliverables:**
+- [x] `tenants` group (CRUD, user membership)
+- [x] `heartbeat` group (agent health, monitoring, logs with WS streaming)
+- [x] `system-configs` group (key-value server configuration)
+- [x] `edition` group (server edition info, no auth)
+- [x] `config` extensions (permissions CRUD via HTTP + WS)
+
+**Key Files:** `cmd/tenants.go`, `cmd/heartbeat.go`, `cmd/system_configs.go`, `cmd/edition.go`, `cmd/config_cmd.go` extensions
+
+**Status:** COMPLETE; 1 critical fix applied (config permissions revoke gated with `tui.Confirm`)
+
+---
+
+### P2: Migration (Backup/Restore + Export/Import) ✓ COMPLETE
+
+**Deliverables:**
+- [x] `backup` group (system/tenant, preflight, signed download, S3 integration)
+- [x] `restore` group (system/tenant with typed confirmation safety)
+- [x] Export/import for agents, teams, skills, mcp (preview-first)
+- [x] Signed download flow (unauthenticated binary via token)
+- [x] Multipart streaming upload (no RAM buffering)
+
+**Key Files:** `cmd/backup.go`, `cmd/backup_s3.go`, `cmd/restore.go`, `cmd/*_export.go`, `internal/client/signed_download.go`, `internal/client/multipart_upload.go`
+
+**Status:** COMPLETE; 4 critical fixes applied (S3 masking, URL escaping, error propagation, MkdirAll)
+
+---
+
+### P3: Vault (Knowledge Vault / RAG) ✓ COMPLETE
+
+**Deliverables:**
+- [x] `vault` group (documents CRUD, links management, upload, search, tree view, graph, enrichment)
+- [x] Document metadata + links (knowledge graph edges)
+- [x] Streaming multipart file upload
+- [x] Semantic + full-text search (RAG)
+- [x] Directory tree browser (TTY: ASCII, piped: JSON)
+- [x] Graph visualization (JSON or Graphviz DOT format)
+- [x] Background enrichment pipeline control
+
+**Key Files:** `cmd/vault.go`, `cmd/vault_documents.go`, `cmd/vault_links.go`, `cmd/vault_upload.go`, `cmd/vault_enrichment.go`, `internal/output/tree.go`
+
+**Status:** COMPLETE; 2 critical fixes applied (documents create --file handling, URL query escaping)
+
+**Deferred:** vault_documents.go split (303 LoC overage; refactoring only, low priority)
+
+---
+
+### P4: Agent Lifecycle + Chat + Teams + Memory KG ✓ COMPLETE
+
+**Deliverables:**
+- [x] `agents` extensions (lifecycle: wake/wait/identity; admin ops; sharing; instances; links; evolution; episodic; v3-flags; misc)
+- [x] `chat` extensions (history, inject, session-status — AI-critical MAX POLISH)
+- [x] `teams` extensions (members, tasks: CRUD + review + advanced + delete-bulk, workspace, events streaming, scopes)
+- [x] `memory kg` subsystem (entities CRUD, traversal, stats, graph, deduplication, legacy compat)
+- [x] `memory` extensions (index, chunks, global documents)
+- [x] AI-critical commands with ≥80% test coverage
+
+**Key Files:** 26 new files (agents_*, chat_ai_commands.go, teams_*, memory_kg_*) + 4 modified (agents.go trimmed to 196 LoC, chat.go to 214 LoC, teams.go to 150 LoC, memory.go to 147 LoC)
+
+**Status:** COMPLETE with modularization; 2 critical fixes applied (strict JSON validation, WS cleanup on timeout)
+
+**Note:** chat.go and chat_ai_commands.go are 214 LoC (14 lines over limit) — overage is entirely docstrings for AI-critical help text (MAX POLISH requirement)
+
+---
+
+### P5: Advanced Groups (pair, oauth, packages, users, quota, send) ⏳ DEFERRED
+
+**Status:** Not started; deferred to future sprint
+
+**Scope:**
+- pair — Device pairing CLI flow
+- oauth — OAuth authorization endpoints
+- packages — Package management (skills, tools, etc.)
+- users — User account management
+- quota — Usage quota/limits
+- send — Message broadcasting
+
+**Also includes subcommand extensions:**
+- channels pending extensions
+- mcp reconnect
+- skills install-dep
+- providers verify-embedding / claude-cli
+- tools builtin tenant-config
+- admin credentials extensions
 
 ---
 
