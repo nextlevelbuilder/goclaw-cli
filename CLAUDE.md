@@ -26,10 +26,47 @@ make install             # Install to GOPATH/bin
 cmd/           # Cobra command files (1 per resource group)
 internal/
 ├── client/    # HTTP + WebSocket + auth clients
+│   ├── errors.go    # APIError (matches server ErrorShape)
+│   └── follow.go    # FollowStream() with exponential backoff reconnect
 ├── config/    # Config loader (~/.goclaw/)
-├── output/    # Table/JSON/YAML formatters
+├── output/    # Table/JSON/YAML formatters + AI-ergonomics foundation
+│   ├── exit.go      # ExitCode constants (0-6) + MapServerCode + Exit
+│   ├── error.go     # ErrorDetail/PrintError/ParseHTTPError/FromError
+│   └── tty.go       # IsTTY + ResolveFormat (TTY auto-detection)
 └── tui/       # Interactive prompts
 ```
+
+## AI-First Ergonomics (Phase 0 — implemented)
+
+These patterns are **locked** — do not change without updating CHANGELOG.md.
+
+### Output format auto-detection
+Precedence: `--output` flag > `GOCLAW_OUTPUT` env > TTY detection
+- stdout is TTY → `"table"` (human)
+- stdout is piped/redirected → `"json"` (machine)
+
+### Exit codes (automation contract)
+| Code | Trigger |
+|------|---------|
+| 0 | Success |
+| 1 | Generic/unknown |
+| 2 | Auth (UNAUTHORIZED, NOT_PAIRED, etc.) |
+| 3 | Not found |
+| 4 | Validation |
+| 5 | Server error |
+| 6 | Resource/network/rate-limit |
+
+### Error output shape (JSON mode)
+```json
+{"error": {"code": "UNAUTHORIZED", "message": "..."}}
+```
+
+### Central error handler
+All command errors bubble via `return err` to `cmd.Execute()` → `output.PrintError` + `output.Exit(output.FromError(err))`. Do NOT print errors in individual commands.
+
+### Flags
+- `--quiet` — suppresses banners/tips in non-interactive contexts
+- `--output` / `-o` — default empty (triggers auto-detect), not `"table"`
 
 ## Conventions
 
@@ -47,6 +84,10 @@ internal/
 - `readContent()` — read from `@filepath` or literal string
 - `unmarshalMap()` / `unmarshalList()` — parse JSON responses
 - `printer.Print()` — output in configured format
+- `output.ResolveFormat(flagVal)` — resolve format with TTY fallback
+- `output.FromError(err)` — map error to exit code
+- `output.PrintError(err, format)` — format-aware error output
+- `client.FollowStream(ctx, ...)` — persistent WS streaming with reconnect
 
 ## Testing
 
