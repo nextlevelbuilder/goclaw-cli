@@ -11,6 +11,14 @@ case "$(uname -s)" in
     exit 1 ;;
 esac
 
+# ------------- helpers -------------
+# has_tty: succeed iff /dev/tty is actually usable (not just readable as path).
+# `-r /dev/tty` can be true even when the TTY is detached (e.g. `< /dev/null`).
+# Probe by trying to open /dev/tty for read; suppress any error.
+has_tty() {
+  { true < /dev/tty; } 2>/dev/null
+}
+
 # ------------- args -------------
 MODE=""
 DRY_RUN=0
@@ -81,13 +89,13 @@ fi
 
 # ------------- interactive mode selection -------------
 if [[ -z "$MODE" ]]; then
-  if [[ -t 0 || -r /dev/tty ]]; then
+  if has_tty; then
     # We have a TTY to read from.
     echo "Choose permission mode:"
     echo "  1) Full wildcard Bash(goclaw:*) — trust this machine fully"
     echo "  2) Readonly verbs only (~20 rules, SAFEST)"
     echo "  3) No patching — print JSON snippet"
-    read -r -p "Select [3]: " MODE < /dev/tty || MODE="3"
+    read -r -p "Select [3]: " MODE < /dev/tty 2>/dev/null || MODE="3"
     MODE="${MODE:-3}"
   else
     # Piped (curl|bash) — default Mode 3.
@@ -103,11 +111,11 @@ esac
 
 # ------------- confirm Mode 1 -------------
 if [[ "$MODE" == "1" ]]; then
-  if [[ -r /dev/tty ]]; then
+  if has_tty; then
     echo ""
     echo "WARNING: Mode 1 grants Claude Code permission to run ANY goclaw command,"
     echo "         including destructive operations (delete, revoke, clear)."
-    read -r -p "Continue? [y/N] " CONFIRM < /dev/tty || CONFIRM=""
+    read -r -p "Continue? [y/N] " CONFIRM < /dev/tty 2>/dev/null || CONFIRM=""
     case "$CONFIRM" in y|Y|yes|YES) ;; *) echo "Aborted."; exit 0 ;; esac
   else
     echo "ERROR: Mode 1 requires TTY confirmation. Re-run in terminal or pass --mode 2|3." >&2
@@ -117,8 +125,8 @@ fi
 
 # ------------- skill overwrite gate -------------
 if [[ -d "$SKILL_DIR" && "$FORCE" != "1" ]]; then
-  if [[ -r /dev/tty ]]; then
-    read -r -p "Existing skill at $SKILL_DIR. Overwrite? [y/N] " OW < /dev/tty || OW=""
+  if has_tty; then
+    read -r -p "Existing skill at $SKILL_DIR. Overwrite? [y/N] " OW < /dev/tty 2>/dev/null || OW=""
     case "$OW" in y|Y|yes|YES) ;; *) echo "Aborted."; exit 0 ;; esac
   else
     echo "ERROR: $SKILL_DIR exists. Re-run with --force to overwrite." >&2
