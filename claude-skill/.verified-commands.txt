@@ -1,0 +1,60 @@
+A production-ready CLI for managing GoClaw AI agent gateway servers.
+Supports interactive (human) and automation (AI agent / CI) modes.
+
+Usage:
+  goclaw [command]
+
+Available Commands:
+  activity         View audit log
+  agents           Manage agents
+  api-docs         View API documentation
+  api-keys         Manage API keys for scoped access
+  approvals        Manage execution approvals
+  auth             Manage authentication
+  channels         Manage messaging channels
+  chat             Chat with an agent
+  completion       Generate the autocompletion script for the specified shell
+  config           Manage server configuration
+  contacts         Manage contacts
+  credentials      Manage CLI credentials store
+  cron             Manage scheduled jobs
+  delegations      View delegation history
+  devices          Manage paired devices
+  export           Export resources (agents, teams, skills, mcp)
+  health           Check server health
+  heartbeat        Manage heartbeat configuration and monitoring
+  help             Help about any command
+  import           Import resources (agents, teams, skills, mcp)
+  knowledge-graph  Knowledge graph operations
+  logs             View server logs
+  mcp              Manage MCP servers and grants
+  media            Upload and download media
+  memory           Manage agent memory
+  packages         Manage runtime packages
+  pending-messages Manage pending messages
+  providers        Manage LLM providers
+  sessions         Manage chat sessions
+  skills           Manage skills
+  status           Show server status and metadata
+  storage          Browse workspace files
+  system-config    Per-tenant key-value configuration
+  teams            Manage agent teams
+  tenants          Manage tenants (admin)
+  tools            Manage built-in tools
+  traces           View LLM traces
+  tts              Text-to-speech operations
+  usage            View usage and cost analytics
+  version          Print CLI version information
+
+Flags:
+  -h, --help               help for goclaw
+      --insecure           Skip TLS certificate verification
+  -o, --output string      Output format: table, json, yaml (default "table")
+      --profile string     Config profile to use (default: active profile)
+      --server string      GoClaw server URL (env: GOCLAW_SERVER)
+      --tenant-id string   Tenant ID for multi-tenant operations (env: GOCLAW_TENANT_ID)
+      --token string       Auth token or API key (env: GOCLAW_TOKEN)
+  -v, --verbose            Enable verbose/debug output
+  -y, --yes                Skip confirmation prompts (automation mode)
+
+Use "goclaw [command] --help" for more information about a command.
