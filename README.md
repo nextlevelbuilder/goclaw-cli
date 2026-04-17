@@ -179,6 +179,26 @@ Switch profiles:
 goclaw auth use-context staging
 ```
 
+## Claude Code Skill
+
+A Claude Code skill wrapping this CLI lives in [`claude-skill/`](./claude-skill/).
+It lets Claude Code autonomously invoke `goclaw` to manage your GoClaw server —
+list agents, run `exec`-style shell commands on the server, inspect traces, etc.
+
+Install (once the binary is in `PATH`):
+
+```bash
+RELEASE_URL="https://github.com/nextlevelbuilder/goclaw-cli/releases/download/skill-v0.1.0"
+curl -fsSL "$RELEASE_URL/goclaw-skill.tar.gz" -o /tmp/goclaw-skill.tar.gz
+curl -fsSL "$RELEASE_URL/goclaw-skill.sha256" -o /tmp/goclaw-skill.sha256
+(cd /tmp && shasum -a 256 -c goclaw-skill.sha256)
+tar xzf /tmp/goclaw-skill.tar.gz -C /tmp
+/tmp/claude-skill/install.sh
+```
+
+See [`claude-skill/README.md`](./claude-skill/README.md) for permission modes,
+example prompts, and uninstall instructions.
+
 ## Development
 
 ```bash
