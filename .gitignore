@@ -14,6 +14,8 @@ dist/
 # Go
 vendor/
 *.test
+coverage.out
+*.coverprofile
 
 # IDE
 .idea/
@@ -24,3 +26,8 @@ vendor/
 # OS
 .DS_Store
 Thumbs.db
+
+# Tooling artifacts (local-only)
+.claude/
+repomix-output.xml
+docs/journals/
