@@ -270,16 +270,19 @@ goclaw (root)
 │   ├── get
 │   └── set
 ├── agents
-│   ├── list
-│   ├── get
-│   ├── create
-│   ├── update
-│   ├── delete
-│   ├── share
+│   ├── list / get / create / update / delete
+│   ├── share / unshare / regenerate / resummon / cancel-summon
 │   ├── delegation-link
-│   ├── export <id> [--file]
-│   ├── import <file> [--apply]
-│   └── import-merge <id> <file> [--apply]
+│   ├── export / import / import-merge
+│   ├── files (list, get, set)            # global AGENTS.md, SOUL.md, IDENTITY.md, ...
+│   ├── instances (list, get-file, set-file, metadata, update-metadata)
+│   ├── episodic (list, search)
+│   ├── evolution (metrics, suggestions, update)
+│   ├── orchestration / codex-pool-activity
+│   ├── skills list                       # skills granted to agent
+│   ├── v3-flags (get, toggle)
+│   ├── wake / wait / identity
+│   └── prompt-preview
 ├── api-keys (list, create, revoke)
 ├── api-docs (open, spec)
 ├── backup
@@ -305,12 +308,17 @@ goclaw (root)
 ├── providers (list, create, update, delete, models)
 ├── tools (list, invoke, delete)
 ├── cron (list, create, update, delete, trigger, history)
-├── teams (list, create, members, task-board, workspace, export, import [--apply])
+├── teams (list, create, members, task-board, export, import [--apply])
+│   └── workspace (list, read, delete, upload, move)
 ├── channels (list, contacts, pending-messages)
 ├── traces (list, export)
 ├── memory (list, search, upsert)
 ├── knowledge-graph (entities, links, query)
-├── usage (summary, cost-breakdown)
+├── usage (summary, detail, costs, timeseries, breakdown)
+├── costs (server-side cost summary; alias under traces.go)
+├── files (sign)                                # signed URL helper
+├── voices (list, refresh)                      # voice catalog
+├── hooks (list, create, update, delete, toggle, test, history)
 ├── tenants (list, get, create, update, mine, users list/add/remove)
 ├── heartbeat (get, set, toggle, test, targets, logs, checklist get/set)
 ├── system-configs (list, get, set, delete)
@@ -320,14 +328,14 @@ goclaw (root)
 ├── storage (list, download)
 ├── approvals (list, approve, deny)
 ├── delegations
-├── tts (synthesize, list-voices)
+├── tts (status, enable, disable, providers, set-provider, test-connection)
 ├── media (upload, download)
 ├── activity
 ├── status
 └── version
 ```
 
-**Total: 35 command groups**
+**Total: ~40 command groups** (after AI-first expansion P0–P2 reaching CLI parity with server admin surface)
 
 ---
 

@@ -258,8 +258,14 @@ goclaw agents list  # Uses custom server/token/output
 ### Auth & Profiles (6 commands)
 `auth`, `credentials`
 
-### Agent Management (7 commands)
-`agents` (list, get, create, update, delete, share, delegation-link)
+### Agent Management (~30 subcommands)
+`agents` core: list, get, create, update, delete, share, unshare, regenerate, resummon, cancel-summon, prompt-preview
+`agents files` (list, get, set) — global context files (AGENTS.md, SOUL.md, IDENTITY.md, ...)
+`agents instances` (list, get-file, set-file, metadata, update-metadata)
+`agents episodic` (list, search), `agents evolution` (metrics, suggestions, update)
+`agents links` (list/create/update/delete), `agents skills list`
+`agents v3-flags` (get, toggle), `agents wake/wait/identity`
+`agents orchestration`, `agents codex-pool-activity`, `agents export/import/import-merge`
 
 ### Chat & Messaging (1 command)
 `chat`
@@ -283,7 +289,8 @@ goclaw agents list  # Uses custom server/token/output
 `cron` (list, create, update, delete, trigger, history)
 
 ### Team Management (5 commands)
-`teams` (list, create, members, task-board, workspace)
+`teams` (list, create, members, task-board, events, scopes, export, import)
+`teams workspace` (list, read, delete, upload, move)
 
 ### Channels (3 commands)
 `channels` (list, contacts, pending-messages)
@@ -297,8 +304,15 @@ goclaw agents list  # Uses custom server/token/output
 ### Knowledge Graph (2 commands)
 `knowledge-graph` (entities, links, query)
 
-### Usage Analytics (2 commands)
-`usage` (summary, cost-breakdown)
+### Usage Analytics (5 subcommands)
+`usage` (summary, detail, costs, timeseries, breakdown)
+
+### Hooks (7 subcommands) — event interception
+`hooks` (list, create, update, delete, toggle, test, history)
+
+### Files & Voices
+`files sign` — signed URL helper
+`voices` (list, refresh) — voice catalog
 
 ### Server Config (3 commands)
 `config` (get, apply, patch)
@@ -315,8 +329,8 @@ goclaw agents list  # Uses custom server/token/output
 ### Delegations (1 command)
 `delegations`
 
-### Text-to-Speech (2 commands)
-`tts` (synthesize, list-voices)
+### Text-to-Speech (6 subcommands)
+`tts` (status, enable, disable, providers, set-provider, test-connection)
 
 ### Media (2 commands)
 `media` (upload, download)
@@ -327,7 +341,7 @@ goclaw agents list  # Uses custom server/token/output
 ### Utility (2 commands)
 `version`, `status`
 
-**Total: 28 command groups**
+**Total: ~40 command groups** (after AI-first expansion through P6 — CLI parity with server admin surface)
 
 ---
 
@@ -335,6 +349,7 @@ goclaw agents list  # Uses custom server/token/output
 
 | Version | Date | Status | Notes |
 |---------|------|--------|-------|
+| v1.1.0 | 2026-05-02 | Unreleased | P6 Domain Coverage Expansion (hooks, agents files, usage analytics, voices, etc.) |
 | v1.0.0 | 2026-03-15 | Production | All phases complete (1-9) |
 | v0.x | Earlier | Dev | Feature development |
 

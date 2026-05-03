@@ -113,11 +113,28 @@ var packagesDenyGroupsCmd = &cobra.Command{
 	},
 }
 
+var packagesGitHubReleasesCmd = &cobra.Command{
+	Use:   "github-releases",
+	Short: "List GitHub releases for tracked packages (GET /v1/packages/github-releases)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		data, err := c.Get("/v1/packages/github-releases")
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalList(data))
+		return nil
+	},
+}
+
 func init() {
 	packagesInstallCmd.Flags().String("runtime", "", "Target runtime: python, node")
 	packagesUninstallCmd.Flags().String("runtime", "", "Target runtime: python, node")
 
 	packagesCmd.AddCommand(packagesListCmd, packagesInstallCmd, packagesUninstallCmd,
-		packagesRuntimesCmd, packagesDenyGroupsCmd)
+		packagesRuntimesCmd, packagesDenyGroupsCmd, packagesGitHubReleasesCmd)
 	rootCmd.AddCommand(packagesCmd)
 }

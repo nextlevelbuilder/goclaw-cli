@@ -169,5 +169,5 @@ func init() {
 
 	// ttsCmd and mediaCmd are assembled in admin_tts_media.go init().
 	// adminCredentialsCmd is assembled in admin_credentials.go init().
-	rootCmd.AddCommand(approvalsCmd, delegationsCmd, adminCredentialsCmd, activityCmd, ttsCmd, mediaCmd)
+	rootCmd.AddCommand(approvalsCmd, delegationsCmd, adminCredentialsCmd, activityCmd, ttsCmd, mediaCmd, voicesCmd)
 }

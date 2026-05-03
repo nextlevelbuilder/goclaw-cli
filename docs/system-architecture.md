@@ -49,7 +49,7 @@ main()
 2. Initialize output printer
 3. Execute command handler
 
-### 2. Command Layer (cmd/ - 21 files)
+### 2. Command Layer (cmd/ - 91 files, modularized)
 
 **Pattern: Cobra Command Structure**
 
@@ -57,13 +57,21 @@ main()
 rootCmd (goclaw)
   ├─ PersistentFlags: --server, --token, --output, --yes, --verbose, --insecure, --profile
   ├─ PersistentPreRunE: Load config, create printer
-  └─ Subcommands (30 groups)
-      ├─ auth (login, logout, use-context)
-      ├─ agents (list, get, create, update, delete, share)
-      ├─ api-keys (list, create, revoke)
-      ├─ api-docs (open, spec)
-      ├─ chat (interactive + streaming)
-      ├─ sessions, skills, mcp, providers, tools, cron, teams, channels...
+  └─ Subcommands (~40 groups)
+      ├─ auth, credentials, api-keys, api-docs
+      ├─ agents (CRUD + files + instances + episodic + evolution + links + skills + v3-flags + ...)
+      ├─ chat, sessions, skills, mcp, providers, tools, cron
+      ├─ teams (+ workspace upload/move + tasks + events + scopes)
+      ├─ channels (contacts, instances, pending, writers)
+      ├─ hooks (list/create/update/delete/toggle/test/history)  # event interception
+      ├─ vault (documents, links, search, graph, enrichment, upload)
+      ├─ memory (kg entities/dedup/graph/extract; index; chunks)
+      ├─ usage (summary/detail/costs/timeseries/breakdown)
+      ├─ traces, costs, files (sign), voices (list/refresh)
+      ├─ tts, media, packages (+ github-releases)
+      ├─ tenants, users, system-configs, oauth, pair, send, quota
+      ├─ backup, restore, storage, logs, status, edition, version
+      └─ approvals, delegations, activity, admin-credentials, heartbeat
 ```
 
 **Command Handler Pattern:**

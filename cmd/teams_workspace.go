@@ -1,6 +1,12 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/url"
+	"os"
+
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -82,6 +88,96 @@ var teamsWorkspaceDeleteCmd = &cobra.Command{
 	},
 }
 
+var teamsWorkspaceUploadCmd = &cobra.Command{
+	Use:   "upload <teamID> <local-file>",
+	Short: "Upload a file to team workspace (POST /v1/teams/{id}/workspace/upload)",
+	Args:  cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		filePath := args[1]
+		if _, err := os.Stat(filePath); err != nil {
+			return fmt.Errorf("file not found: %s", filePath)
+		}
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		f, err := os.Open(filePath)
+		if err != nil {
+			return fmt.Errorf("open %s: %w", filePath, err)
+		}
+
+		pr, pw := io.Pipe()
+		mw := newMultipartWriter(pw)
+		ct := mw.contentType()
+
+		go func() {
+			defer f.Close()
+			if err := mw.writeFile("file", filePath, f); err != nil {
+				pw.CloseWithError(err)
+				return
+			}
+			pw.CloseWithError(mw.close())
+		}()
+
+		path := "/v1/teams/" + args[0] + "/workspace/upload"
+		if chat, _ := cmd.Flags().GetString("chat"); chat != "" {
+			path += "?chat_id=" + url.QueryEscape(chat)
+		}
+		resp, err := c.PostRaw(path, ct, pr)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode >= 400 {
+			body, _ := io.ReadAll(resp.Body)
+			return fmt.Errorf("upload failed [%d]: %s", resp.StatusCode, string(body))
+		}
+		var result map[string]any
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			printer.Success("File uploaded")
+			return nil
+		}
+		printer.Print(result)
+		return nil
+	},
+}
+
+var teamsWorkspaceMoveCmd = &cobra.Command{
+	Use:   "move <teamID>",
+	Short: "Rename/move a workspace file (PUT /v1/teams/{id}/workspace/move)",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		from, _ := cmd.Flags().GetString("from")
+		to, _ := cmd.Flags().GetString("to")
+		if from == "" || to == "" {
+			return fmt.Errorf("--from and --to are required")
+		}
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		q := url.Values{"from": {from}, "to": {to}}
+		if chat, _ := cmd.Flags().GetString("chat"); chat != "" {
+			q.Set("chat_id", chat)
+		}
+		path := "/v1/teams/" + args[0] + "/workspace/move?" + q.Encode()
+		data, err := c.Put(path, nil)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
 func init() {
-	teamsWorkspaceCmd.AddCommand(teamsWorkspaceListCmd, teamsWorkspaceReadCmd, teamsWorkspaceDeleteCmd)
+	teamsWorkspaceUploadCmd.Flags().String("chat", "", "Chat ID (required for isolated workspaces)")
+	teamsWorkspaceMoveCmd.Flags().String("from", "", "Source filename")
+	teamsWorkspaceMoveCmd.Flags().String("to", "", "Destination filename")
+	teamsWorkspaceMoveCmd.Flags().String("chat", "", "Chat ID (required for isolated workspaces)")
+	_ = teamsWorkspaceMoveCmd.MarkFlagRequired("from")
+	_ = teamsWorkspaceMoveCmd.MarkFlagRequired("to")
+
+	teamsWorkspaceCmd.AddCommand(teamsWorkspaceListCmd, teamsWorkspaceReadCmd,
+		teamsWorkspaceDeleteCmd, teamsWorkspaceUploadCmd, teamsWorkspaceMoveCmd)
 }

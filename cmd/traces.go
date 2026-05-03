@@ -177,6 +177,58 @@ var usageCostsCmd = &cobra.Command{
 	},
 }
 
+var usageTimeseriesCmd = &cobra.Command{
+	Use: "timeseries", Short: "Token usage over time (GET /v1/usage/timeseries)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		q := url.Values{}
+		for _, k := range []string{"start", "end", "granularity", "agent", "user", "tenant"} {
+			if v, _ := cmd.Flags().GetString(k); v != "" {
+				q.Set(k, v)
+			}
+		}
+		path := "/v1/usage/timeseries"
+		if len(q) > 0 {
+			path += "?" + q.Encode()
+		}
+		data, err := c.Get(path)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
+var usageBreakdownCmd = &cobra.Command{
+	Use: "breakdown", Short: "Usage broken down by dimension (GET /v1/usage/breakdown)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		q := url.Values{}
+		for _, k := range []string{"by", "start", "end"} {
+			if v, _ := cmd.Flags().GetString(k); v != "" {
+				q.Set(k, v)
+			}
+		}
+		path := "/v1/usage/breakdown"
+		if len(q) > 0 {
+			path += "?" + q.Encode()
+		}
+		data, err := c.Get(path)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
 func init() {
 	tracesListCmd.Flags().String("agent", "", "Filter by agent ID")
 	tracesListCmd.Flags().String("status", "", "Filter: running, success, error")
@@ -190,7 +242,18 @@ func init() {
 	usageDetailCmd.Flags().String("from", "", "Start date")
 	usageDetailCmd.Flags().String("to", "", "End date")
 
+	usageTimeseriesCmd.Flags().String("start", "", "Start ISO timestamp")
+	usageTimeseriesCmd.Flags().String("end", "", "End ISO timestamp")
+	usageTimeseriesCmd.Flags().String("granularity", "day", "Bucket size: hour|day")
+	usageTimeseriesCmd.Flags().String("agent", "", "Filter by agent")
+	usageTimeseriesCmd.Flags().String("user", "", "Filter by user")
+	usageTimeseriesCmd.Flags().String("tenant", "", "Filter by tenant")
+	usageBreakdownCmd.Flags().String("by", "agent", "Dimension: agent|user|tenant")
+	usageBreakdownCmd.Flags().String("start", "", "Start ISO timestamp")
+	usageBreakdownCmd.Flags().String("end", "", "End ISO timestamp")
+
 	tracesCmd.AddCommand(tracesListCmd, tracesGetCmd, tracesExportCmd)
-	usageCmd.AddCommand(usageSummaryCmd, usageDetailCmd, usageCostsCmd)
+	usageCmd.AddCommand(usageSummaryCmd, usageDetailCmd, usageCostsCmd,
+		usageTimeseriesCmd, usageBreakdownCmd)
 	rootCmd.AddCommand(tracesCmd, usageCmd)
 }

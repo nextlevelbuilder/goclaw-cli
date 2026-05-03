@@ -5,6 +5,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [Unreleased] — Domain Coverage Expansion (P0–P2)
+
+### Added
+
+**P0 — Critical**
+- `goclaw hooks` (list, create, update, delete, toggle, test, history) — manage event hooks via WS RPC `hooks.*`. Closes the entire hooks domain that was previously unreachable from CLI.
+- `goclaw agents files` (list, get, set) — edit global agent context files (AGENTS.md, SOUL.md, IDENTITY.md, USER.md, USER_PREDEFINED.md, CAPABILITIES.md, BOOTSTRAP.md, MEMORY.json, HEARTBEAT) via WS RPC `agents.files.*`. `--propagate` pushes change to all existing user instances.
+
+**P1 — Lifecycle & analytics**
+- `goclaw agents cancel-summon <id>` — cancel an in-progress summon (`POST /v1/agents/{id}/cancel-summon`).
+- `goclaw agents skills list <id>` — list skills granted to an agent (`GET /v1/agents/{id}/skills`).
+- `goclaw usage timeseries` — bucketed usage over time (`GET /v1/usage/timeseries`).
+- `goclaw usage breakdown` — usage broken down by agent/user/tenant (`GET /v1/usage/breakdown`).
+
+**P2 — Coverage completion**
+- `goclaw tts test-connection` — test a TTS provider end-to-end (`POST /v1/tts/test-connection`).
+- `goclaw voices list` and `goclaw voices refresh` — voice catalog.
+- `goclaw memory kg extract` — switched to new endpoint `POST /v1/agents/{id}/kg/extract` (legacy `/v1/knowledge-graph` path retired).
+- `goclaw files sign` — generate signed URL for server-side file (`POST /v1/files/sign`).
+- `goclaw teams workspace upload` and `goclaw teams workspace move` — multipart upload + rename for team workspace.
+- `goclaw packages github-releases` — list GitHub releases for tracked packages.
+
+### Notes
+- All new commands honor the AI-first ergonomics contract: `--output=json` envelope, central error handler, `--yes` for destructive ops, `--quiet` for CI.
+- Out of scope: OpenAI-compatible `/chat/completions` and `/v1/responses` endpoints (client APIs, not admin CLI surface).
+
+---
+
 ## [Unreleased] — AI Ergonomics Foundation (Phase 0)
 
 ### Breaking Changes

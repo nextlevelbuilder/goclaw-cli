@@ -365,25 +365,52 @@
 
 ---
 
-### P5: Advanced Groups (pair, oauth, packages, users, quota, send) ⏳ DEFERRED
+### P5: Advanced Groups (pair, oauth, packages, users, quota, send) ✓ COMPLETE
 
-**Status:** Not started; deferred to future sprint
+**Deliverables:**
+- [x] `pair` — Device pairing CLI flow
+- [x] `oauth` — OAuth authorization endpoints (ChatGPT/OpenAI providers)
+- [x] `packages` — Package management (list, install, runtimes, deny-groups, github-releases)
+- [x] `users` — User account search
+- [x] `quota` — Usage quota/limits
+- [x] `send` — Message broadcasting
 
-**Scope:**
-- pair — Device pairing CLI flow
-- oauth — OAuth authorization endpoints
-- packages — Package management (skills, tools, etc.)
-- users — User account management
-- quota — Usage quota/limits
-- send — Message broadcasting
+**Subcommand extensions:**
+- [x] channels pending extensions
+- [x] skills install-dep
+- [x] providers verify-embedding / claude-cli
+- [x] tools builtin tenant-config
+- [x] admin credentials extensions
 
-**Also includes subcommand extensions:**
-- channels pending extensions
-- mcp reconnect
-- skills install-dep
-- providers verify-embedding / claude-cli
-- tools builtin tenant-config
-- admin credentials extensions
+**Status:** COMPLETE (commit `6697b1f`)
+
+---
+
+### P6: Domain Coverage Expansion ✓ COMPLETE (2026-05-02)
+
+**Objective:** Reach CLI parity with server admin surface (~261 REST routes + 100+ WS RPC).
+
+**P0 — Critical:**
+- [x] `hooks` (list/create/update/delete/toggle/test/history) — entire hooks domain (`cmd/hooks.go`, `cmd/hooks_test_runner.go`)
+- [x] `agents files` (list/get/set) — global context files: AGENTS.md, SOUL.md, IDENTITY.md, USER.md, USER_PREDEFINED.md, CAPABILITIES.md, BOOTSTRAP.md, MEMORY.json, HEARTBEAT (`cmd/agents_files.go`)
+
+**P1 — Lifecycle & analytics:**
+- [x] `agents cancel-summon`, `agents skills list` (in `cmd/agents_misc.go`)
+- [x] `usage timeseries`, `usage breakdown` (in `cmd/traces.go`)
+
+**P2 — Coverage completion:**
+- [x] `tts test-connection`, `voices list/refresh` (in `cmd/admin_tts_media.go`)
+- [x] `memory kg extract` re-pointed to new endpoint (`cmd/memory_kg_legacy.go`)
+- [x] `files sign` (`cmd/files.go`)
+- [x] `teams workspace upload/move` (in `cmd/teams_workspace.go`)
+- [x] `packages github-releases` (in `cmd/packages.go`)
+
+**Status:** COMPLETE — `go build`, `go vet`, `go test ./cmd/...` all pass.
+
+**Deferred / out of scope:**
+- OpenAI-compatible `/chat/completions` and `/v1/responses` (client APIs)
+- `evolution_skill_apply` (no REST route registered server-side)
+- `hooks history` pagination (server stub returns empty list pending Phase 4)
 
 ---
 

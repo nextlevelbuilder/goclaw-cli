@@ -34,7 +34,7 @@ var memoryKGQueryCmd = &cobra.Command{
 
 var memoryKGExtractCmd = &cobra.Command{
 	Use:   "extract <agentID>",
-	Short: "Extract entities from text (legacy)",
+	Short: "Extract entities from text (POST /v1/agents/{id}/kg/extract)",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := newHTTP()
@@ -46,7 +46,7 @@ var memoryKGExtractCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Post("/v1/knowledge-graph/"+args[0]+"/extract",
+		data, err := c.Post("/v1/agents/"+args[0]+"/kg/extract",
 			map[string]any{"text": content})
 		if err != nil {
 			return err
