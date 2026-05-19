@@ -11,9 +11,6 @@ concurrency:
   group: release-${{ github.ref_name }}
   cancel-in-progress: false
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -49,17 +46,36 @@ jobs:
           fi
           printf '{\n  "maintainedVersion": "%s.%s-beta"\n}\n' "$major" "$minor" > .semrelrc
           cat .semrelrc
+      - name: Capture existing release tags
+        shell: bash
+        run: git tag --list 'v[0-9]*' | sort > "$RUNNER_TEMP/release-tags-before.txt"
+      - name: Install semantic-release
+        run: go install github.com/go-semantic-release/semantic-release/v2/cmd/semantic-release@v2.31.0
       - id: semrel
-        uses: go-semantic-release/action@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          hooks: goreleaser
-          changelog-file: CHANGELOG.md
-          prepend: true
-          allow-initial-development-versions: true
-          prerelease: ${{ github.ref_name == 'dev' }}
+        name: Run semantic-release
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          args=(
+            --hooks goreleaser
+            --changelog CHANGELOG.md
+            --prepend-changelog
+            --allow-initial-development-versions
+            --allow-no-changes
+          )
+          if [ "$GITHUB_REF_NAME" = "dev" ]; then
+            args+=(--prerelease)
+          fi
+
+          semantic-release "${args[@]}"
+
+          git fetch --tags origin
+          git tag --list 'v[0-9]*' | sort > "$RUNNER_TEMP/release-tags-after.txt"
+          new_tag="$(comm -13 "$RUNNER_TEMP/release-tags-before.txt" "$RUNNER_TEMP/release-tags-after.txt" | sort -V | tail -n1)"
+          if [ -n "$new_tag" ]; then
+            echo "version=${new_tag#v}" >> "$GITHUB_OUTPUT"
+          fi
       - name: Upload generated changelog
         if: steps.semrel.outputs.version != ''
         shell: bash

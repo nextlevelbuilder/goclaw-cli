@@ -357,9 +357,6 @@ on:
 permissions:
   contents: write
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -376,14 +373,12 @@ jobs:
         run: go vet ./...
       - name: Test
         run: go test -count=1 ./...
-      - uses: go-semantic-release/action@v1
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          hooks: goreleaser
-          changelog-file: CHANGELOG.md
-          prepend: true
+      - name: Install semantic-release
+        run: go install github.com/go-semantic-release/semantic-release/v2/cmd/semantic-release@v2.31.0
+      - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: semantic-release --hooks goreleaser --changelog CHANGELOG.md --prepend-changelog
 ```
 
 **Triggers:**
@@ -394,8 +389,8 @@ jobs:
 1. Checkout full history
 2. Setup Go 1.25
 3. Run build, vet, test, race detector
-4. Compute next SemVer from conventional commits
-5. Run GoReleaser through the semantic-release hook
+4. Install the Go semantic-release CLI
+5. Compute next SemVer from conventional commits and run GoReleaser through the semantic-release hook
 6. Publish GitHub Release assets and generated changelog
 
 ---
