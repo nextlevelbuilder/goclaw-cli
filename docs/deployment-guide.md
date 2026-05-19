@@ -374,7 +374,9 @@ jobs:
       - name: Test
         run: go test -count=1 ./...
       - name: Install semantic-release
-        run: go install github.com/go-semantic-release/semantic-release/v2/cmd/semantic-release@v2.31.0
+        run: |
+          go install github.com/go-semantic-release/semantic-release/v2/cmd/semantic-release@v2.31.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: Run semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

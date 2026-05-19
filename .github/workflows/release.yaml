@@ -50,7 +50,9 @@ jobs:
         shell: bash
         run: git tag --list 'v[0-9]*' | sort > "$RUNNER_TEMP/release-tags-before.txt"
       - name: Install semantic-release
-        run: go install github.com/go-semantic-release/semantic-release/v2/cmd/semantic-release@v2.31.0
+        run: |
+          go install github.com/go-semantic-release/semantic-release/v2/cmd/semantic-release@v2.31.0
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - id: semrel
         name: Run semantic-release
         shell: bash
