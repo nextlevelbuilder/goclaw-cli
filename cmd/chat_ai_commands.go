@@ -43,32 +43,7 @@ Examples:
 		before, _ := cmd.Flags().GetString("before")
 		session, _ := cmd.Flags().GetString("session")
 
-		ws, err := newWS("cli")
-		if err != nil {
-			return err
-		}
-		if _, err := ws.Connect(); err != nil {
-			return err
-		}
-		defer ws.Close()
-
-		params := map[string]any{
-			"agent_key": args[0],
-			"limit":     limit,
-		}
-		if before != "" {
-			params["before"] = before
-		}
-		if session != "" {
-			params["session_key"] = session
-		}
-
-		data, err := ws.Call("chat.history", params)
-		if err != nil {
-			return err
-		}
-		printer.Print(unmarshalList(data))
-		return nil
+		return runChatHistory(args[0], session, before, limit)
 	},
 }
 

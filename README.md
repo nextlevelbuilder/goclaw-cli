@@ -57,6 +57,7 @@ echo "Analyze this log" | goclaw chat myagent
 | `agents` | CRUD, shares, delegation links, per-user instances |
 | `chat` | Interactive or single-shot messaging with streaming |
 | `sessions` | List, preview, delete, reset, label, compact |
+| `codex-pool` | Unified Codex pool activity lookup for agents/providers |
 | `skills` | Upload, manage, grant/revoke access |
 | `mcp` | MCP server management, grants, access requests |
 | `providers` | LLM provider CRUD, model listing, verification |
@@ -81,7 +82,7 @@ echo "Analyze this log" | goclaw chat myagent
 | `tts` | Text-to-speech operations |
 | `media` | Media upload/download |
 | `activity` | Audit log |
-| `api-keys` | API key management (create, list, revoke) |
+| `api-keys` | API key management (create, list, revoke, rotate) |
 | `system upgrade` | Gateway release upgrade status and trigger controls |
 | `workstations` | Coding-agent workstation CRUD, permissions, activity, and agent links |
 | `webhooks` | Webhook admin CRUD, secret rotation, and deletion |
@@ -300,9 +301,30 @@ goclaw api-keys list
 
 # Revoke a key
 goclaw api-keys revoke <key-id>
+
+# Rotate a key by creating a replacement and revoking the old key
+goclaw api-keys rotate <key-id> --name "ci-deploy-v2" --scopes "operator.read,operator.write" --yes
 ```
 
 Available scopes: `operator.admin`, `operator.read`, `operator.write`, `operator.approvals`, `operator.pairing`
+
+## UX Convenience Commands
+
+```bash
+# Unified Codex pool activity
+goclaw codex-pool activity --agent=agent-123
+goclaw codex-pool activity --provider=provider-123
+
+# Resolved server defaults
+goclaw config defaults -o json
+
+# Replay or resume a known chat session
+goclaw chat replay myagent --session=sess-123 -o json
+goclaw chat sessions resume myagent --session=sess-123 -m "Continue" --no-stream
+
+# Invoke a custom tool with JSON args from file
+goclaw tools invoke weather --args=@payload.json
+```
 
 ## API Docs
 

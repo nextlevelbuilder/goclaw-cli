@@ -2,8 +2,24 @@
 
 **Last Updated:** 2026-05-19
 **Phase Structure:** Legacy Phases 1-9 (bootstrap → CI/CD) + AI-First Expansion Phases 0-5 (2026-04-15)
-**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P4 ✓ COMPLETE; Super Admin API Parity ✓ COMPLETE; Domain Coverage P3 ✓ COMPLETE
-**Next Phase:** Domain Coverage residuals: P4 UX polish leftovers, then P5 team attachment download + evolution skill apply.
+**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P4 ✓ COMPLETE; Super Admin API Parity ✓ COMPLETE; Domain Coverage P4 ✓ COMPLETE
+**Next Phase:** Domain Coverage residuals: P5 team attachment download + evolution skill apply.
+
+---
+
+## 2026-05-19: Domain Coverage P4 ✓ COMPLETE
+
+**Objective:** Close UX polish residuals after the P4/P5 sweep without adding new server contracts.
+
+**Deliverables:**
+- [x] Added `codex-pool activity --agent|--provider` as the unified Codex pool activity command.
+- [x] Added `api-keys rotate <id>` as a non-atomic create-and-revoke composite with emit-before-revoke partial failure handling.
+- [x] Added `config defaults` via WS RPC `config.defaults`.
+- [x] Added `chat replay <agent> --session=<key>` and `chat sessions resume <agent> --session=<key>` convenience wrappers.
+- [x] Added `tools invoke --args=<json|@file>` alias support.
+- [x] Added focused P4 route/contract tests and synced README, changelog, codebase summary, and plan docs.
+
+**Validation:** `/usr/local/go/bin/go build ./...`; `/usr/local/go/bin/go test ./...`; `/usr/local/go/bin/go vet ./...`.
 
 ---
 

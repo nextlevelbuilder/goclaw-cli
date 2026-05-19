@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
@@ -153,19 +152,9 @@ var toolsInvokeCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		paramPairs, _ := cmd.Flags().GetStringSlice("param")
-		paramsJSON, _ := cmd.Flags().GetString("params")
-		params := make(map[string]any)
-		if paramsJSON != "" {
-			if err := json.Unmarshal([]byte(paramsJSON), &params); err != nil {
-				return fmt.Errorf("invalid --params JSON: %w", err)
-			}
-		}
-		for _, pair := range paramPairs {
-			parts := strings.SplitN(pair, "=", 2)
-			if len(parts) == 2 {
-				params[parts[0]] = parts[1]
-			}
+		params, err := parseToolInvokeParams(cmd)
+		if err != nil {
+			return err
 		}
 		body := map[string]any{"name": args[0], "parameters": params}
 		data, err := c.Post("/v1/tools/invoke", body)
@@ -190,6 +179,7 @@ func init() {
 	}
 	toolsInvokeCmd.Flags().StringSlice("param", nil, "Parameter key=value pairs")
 	toolsInvokeCmd.Flags().String("params", "", "Parameters as JSON object")
+	toolsInvokeCmd.Flags().String("args", "", "Alias for --params; accepts literal JSON or @filepath")
 
 	toolsCustomCmd.AddCommand(toolsCustomListCmd, toolsCustomGetCmd, toolsCustomCreateCmd,
 		toolsCustomUpdateCmd, toolsCustomDeleteCmd)

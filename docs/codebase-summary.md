@@ -1,7 +1,7 @@
 # GoClaw CLI - Codebase Summary
 
 **Generated from:** `repomix-output.xml` (2026-04-15), updated manually 2026-05-19
-**Phase Status:** P0-P4 Complete (AI-First Expansion); Super Admin API Parity Complete; Domain Coverage P3 Complete
+**Phase Status:** P0-P4 Complete (AI-First Expansion); Super Admin API Parity Complete; Domain Coverage P4 Complete
 **Total Files:** 80+
 **Estimated Tokens:** 80,000+
 **Total Size:** 220+ KB
@@ -10,7 +10,7 @@
 
 ## Overview
 
-GoClaw CLI is a production-ready Go application providing comprehensive command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30+ command groups across modular command files with dual modes: interactive (human) and automation (CI/agent). Phases 0-4 (AI-first expansion) add AI ergonomics, admin/ops, migration, vault, and advanced agent/team/memory support. The 2026-05-18 super-admin parity work adds gateway upgrade, package updates, workstations, webhooks, MCP user credentials, secure env reveal, media/TTS/storage/channel fillers, and focused route-contract tests. The 2026-05-19 P3 filler pass adds first-class profile commands, `GOCLAW_PROFILE`, `sessions compact`, WS health, and trace filter polish.
+GoClaw CLI is a production-ready Go application providing comprehensive command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30+ command groups across modular command files with dual modes: interactive (human) and automation (CI/agent). Phases 0-4 (AI-first expansion) add AI ergonomics, admin/ops, migration, vault, and advanced agent/team/memory support. The 2026-05-18 super-admin parity work adds gateway upgrade, package updates, workstations, webhooks, MCP user credentials, secure env reveal, media/TTS/storage/channel fillers, and focused route-contract tests. The 2026-05-19 P3/P4 filler pass adds first-class profile commands, `GOCLAW_PROFILE`, `sessions compact`, WS health, trace filter polish, `codex-pool`, `api-keys rotate`, `config defaults`, chat session convenience wrappers, and `tools invoke --args`.
 
 **Key Metrics:**
 - **70+ command files** in `cmd/` (modularized for maintainability)
@@ -633,6 +633,12 @@ goclaw vault
 | `agents_v3_flags.go` | `agents v3-flags get/toggle` | Experimental feature flags |
 | `agents_misc.go` | `agents orchestration/codex-pool-activity` | Orchestration + pool status |
 | `chat_ai_commands.go` | `chat history/inject/session-status` | AI-critical MAX POLISH chat ops |
+| `chat_replay.go` | `chat replay` | Session replay wrapper over `chat.history` |
+| `chat_sessions.go` | `chat sessions resume` | Resume wrapper over existing chat session flow |
+| `codex_pool.go` | `codex-pool activity` | Unified agent/provider Codex pool activity lookup |
+| `config_defaults.go` | `config defaults` | Read-only WS config defaults passthrough |
+| `api_keys_rotate.go` | `api-keys rotate` | Replacement key creation + old key revoke composite |
+| `tools_invoke_args.go` | `tools invoke --args` | JSON arg alias/file parsing for tool invocation |
 | `teams_members.go` | `teams members list/add/remove` | Team membership |
 | `teams_tasks.go` | `teams tasks list/get/get-light/create/assign` | Core task CRUD |
 | `teams_tasks_review.go` | `teams tasks approve/reject/comment/comments` | Task review workflow |

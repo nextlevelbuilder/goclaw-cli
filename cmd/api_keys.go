@@ -59,16 +59,9 @@ var apiKeysCreateCmd = &cobra.Command{
 		scopesRaw, _ := cmd.Flags().GetString("scopes")
 		expiresIn, _ := cmd.Flags().GetInt("expires-in")
 
-		// Parse comma-separated scopes into slice
-		var scopes []string
-		for _, s := range strings.Split(scopesRaw, ",") {
-			s = strings.TrimSpace(s)
-			if s != "" {
-				scopes = append(scopes, s)
-			}
-		}
-		if len(scopes) == 0 {
-			return fmt.Errorf("at least one scope is required")
+		scopes, err := parseAPIKeyScopes(scopesRaw)
+		if err != nil {
+			return err
 		}
 
 		body := buildBody("name", name, "scopes", scopes)

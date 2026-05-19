@@ -35,8 +35,9 @@ Example:
 }
 
 var agentsCodexPoolActivityCmd = &cobra.Command{
-	Use:   "codex-pool-activity <id>",
-	Short: "Get codex pool activity for an agent",
+	Use:        "codex-pool-activity <id>",
+	Short:      "Get codex pool activity for an agent",
+	Deprecated: "use 'goclaw codex-pool activity --agent=<id>' instead",
 	Long: `Retrieve recent codex (context pool) activity for an agent.
 
 GET /v1/agents/{id}/codex-pool-activity

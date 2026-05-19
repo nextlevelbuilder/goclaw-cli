@@ -5,7 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — Domain Coverage Expansion (P0–P3)
+## [Unreleased] — Domain Coverage Expansion (P0–P4)
 
 ### Added
 
@@ -33,6 +33,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `goclaw sessions compact <key>` — invokes WS RPC `sessions.compact` behind destructive confirmation.
 - `goclaw health` — uses WS RPC `health` when authenticated, retaining unauthenticated HTTP `/health` fallback.
 - `goclaw traces list --since --agent --status --root-only --limit` — expanded filters for automation-friendly trace search.
+
+**P4 — UX polish**
+- `goclaw codex-pool activity --agent=<id>|--provider=<id>` — unified Codex pool activity lookup; legacy agent/provider commands remain as deprecated aliases.
+- `goclaw api-keys rotate <id>` — create replacement key, show raw key once, then revoke old key with structured partial-failure reporting.
+- `goclaw config defaults` — read-only WS passthrough for server default config values.
+- `goclaw chat replay <agent> --session=<key>` and `goclaw chat sessions resume <agent> --session=<key>` — discoverability wrappers over existing chat session contracts.
+- `goclaw tools invoke <name> --args=<json|@file>` — alias for `--params` with file-backed JSON support.
 
 ### Notes
 - All new commands honor the AI-first ergonomics contract: `--output=json` envelope, central error handler, `--yes` for destructive ops, `--quiet` for CI.

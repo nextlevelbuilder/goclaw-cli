@@ -3,7 +3,7 @@
 **Date:** 2026-05-03
 **Branch:** feat/ai-first-cli-expansion
 **Reference report:** `plans/reports/brainstorm-260503-1907-gap-analysis-round2.md`
-**Status:** P3 complete — P4/P5 sweep complete; residual implementation not-started.
+**Status:** P3/P4 complete — P5 next; P6 remains server-blocked.
 
 ## Summary
 
@@ -12,7 +12,7 @@ Sau R1 (P0–P5) + R2 expansion (P0–P2), CLI đạt ~95% server coverage. R2 r
 | Phase | Scope | LoC | Tier | Status |
 |---|---|---|---|---|
 | P3 | AI-critical fillers (multi-profile, sessions compact, health, traces filter polish) | ~250 | 🔥 | complete |
-| P4 | UX polish batch 1 residuals (codex-pool umbrella, api-keys rotate, config defaults, chat replay/resume, tools invoke `--args` alias) | ~250 | 🟡 | not-started |
+| P4 | UX polish batch 1 residuals (codex-pool umbrella, api-keys rotate, config defaults, chat replay convenience, tools invoke `--args` alias) | ~250 | 🟡 | complete |
 | P5 | Fillers residuals after sweep (team attachments download, evolution skill apply) | ~150 | 🟡 | not-started |
 | P6 | Deferred — blocked on server FRs (traces follow, logs aggregate, providers reconnect, …) | n/a | 🟢 | server-blocked |
 
@@ -25,10 +25,11 @@ Sau R1 (P0–P5) + R2 expansion (P0–P2), CLI đạt ~95% server coverage. R2 r
 
 ## Key Dependencies
 
-- Superseded/blocked by `plans/260518-1936-super-admin-api-parity/` for the next implementation slice. The newer plan narrows the backlog to super-admin operational parity after server `v3.12.0-beta.5`.
-- P3 multi-profile may refactor `internal/config` singleton — finish before P4/P5.
+- Super-admin API parity is already merged; P4 should proceed from current `dev`.
+- P3 multi-profile is complete; P4 can build on stable profile/default output behavior.
 - P5 verify sweep completed 2026-05-19; most suspected gaps already exist under current command paths.
 - P6 = upstream goclaw issues, not CLI work.
+- P4 validation/red-team evidence: `reports/validation-red-team-260519-p4.md`; implementation validated with `go build ./...`, `go test ./...`, and `go vet ./...`.
 
 ## Success Criteria
 
@@ -41,7 +42,7 @@ Sau R1 (P0–P5) + R2 expansion (P0–P2), CLI đạt ~95% server coverage. R2 r
 
 1. Profile naming: resolved as `profile`; legacy `auth use-context` remains.
 2. Codex-pool alias sunset version?
-3. Chat replay output: default stdout JSONL; add `--file` only if user workflow demands it.
+3. Chat replay output: resolved as existing printer output from `chat.history` (JSON array in JSON mode); add JSONL/streaming only if a real workflow demands it.
 4. Health schema: raw passthrough vs normalized?
 5. Server FR ownership for P6 items?
 6. `tts synthesize` AI use case: already covered by `cmd/tts_http.go`; not a server FR.
