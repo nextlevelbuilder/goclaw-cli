@@ -29,6 +29,12 @@ func isValidFormat(s string) bool { return validFormats[s] }
 // Invalid GOCLAW_OUTPUT values emit a warning on stderr and fall through to
 // TTY detection, to avoid silently mis-formatting AI-consumer output.
 func ResolveFormat(flagVal string) string {
+	return ResolveFormatWithDefault(flagVal, "")
+}
+
+// ResolveFormatWithDefault resolves output format with a config/profile default
+// between GOCLAW_OUTPUT and TTY detection.
+func ResolveFormatWithDefault(flagVal, defaultVal string) string {
 	if flagVal != "" {
 		return flagVal
 	}
@@ -37,6 +43,12 @@ func ResolveFormat(flagVal string) string {
 			return env
 		}
 		fmt.Fprintf(os.Stderr, "goclaw: warning: invalid GOCLAW_OUTPUT=%q, falling back to auto-detect (valid: table|json|yaml)\n", env)
+	}
+	if defaultVal != "" {
+		if isValidFormat(defaultVal) {
+			return defaultVal
+		}
+		fmt.Fprintf(os.Stderr, "goclaw: warning: invalid profile output=%q, falling back to auto-detect (valid: table|json|yaml)\n", defaultVal)
 	}
 	if IsTTY(int(os.Stdout.Fd())) {
 		return "table"

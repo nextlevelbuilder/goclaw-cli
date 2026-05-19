@@ -121,9 +121,10 @@ goclaw status                               # Server health check
 
 ### Configuration Hierarchy
 1. **CLI Flags** (highest priority) — `goclaw agents list -o json`
-2. **Environment Variables** — `GOCLAW_SERVER`, `GOCLAW_TOKEN`, `GOCLAW_OUTPUT`
+2. **Environment Variables** — `GOCLAW_SERVER`, `GOCLAW_TOKEN`, `GOCLAW_OUTPUT`, `GOCLAW_PROFILE`
 3. **Config File** — `~/.goclaw/config.yaml`
-4. **Defaults** — Built-in defaults
+4. **Profile Defaults** — active profile server/output settings
+5. **Defaults** — Built-in defaults
 
 ### Command Structure
 - Root command: `goclaw`

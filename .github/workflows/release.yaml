@@ -7,6 +7,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -29,6 +33,8 @@ jobs:
         if: github.ref_name == 'dev'
         shell: bash
         run: |
+          # dev publishes prereleases for the next minor after the latest stable tag.
+          # Example: latest stable v0.5.0 => dev releases v0.6.0-beta.N.
           latest_stable="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1)"
           if [ -z "$latest_stable" ]; then
             major=0
@@ -45,6 +51,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           hooks: goreleaser
+          changelog-file: CHANGELOG.md
+          prepend: true
           allow-initial-development-versions: true
           prerelease: ${{ github.ref_name == 'dev' }}
         env:
@@ -55,7 +63,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_VERSION: ${{ steps.semrel.outputs.version }}
-          RELEASE_CHANGELOG: ${{ steps.semrel.outputs.changelog }}
         run: |
-          printf '%s\n' "$RELEASE_CHANGELOG" > CHANGELOG.md
+          test -s CHANGELOG.md
           gh release upload "v${RELEASE_VERSION}" CHANGELOG.md --clobber

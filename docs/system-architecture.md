@@ -225,13 +225,14 @@ goclaw auth login --pair
 
 ```go
 type Config struct {
-	Server       string
-	Token        string
-	OutputFormat string  // "table", "json", "yaml"
-	Profile      string
-	Insecure     bool    // Skip TLS cert check (testing only)
-	Verbose      bool    // Debug logging
-	Yes          bool    // Skip confirmation prompts
+	Server              string
+	Token               string
+	OutputFormat        string  // resolved "table", "json", "yaml"
+	ProfileOutputFormat string  // profile default, before TTY fallback
+	Profile             string
+	Insecure            bool    // Skip TLS cert check (testing only)
+	Verbose             bool    // Debug logging
+	Yes                 bool    // Skip confirmation prompts
 }
 
 type Profile struct {
@@ -294,8 +295,9 @@ Maps 12 known server error codes to exit codes; HTTP status fallback for envelop
 **TTY-Aware Format Resolution (precedence):**
 1. `--output` flag (explicit)
 2. `GOCLAW_OUTPUT` env var
-3. stdout is TTY → `"table"`
-4. else → `"json"`
+3. active profile output default
+4. stdout is TTY → `"table"`
+5. else → `"json"`
 
 **Printer Interface:**
 
@@ -696,12 +698,18 @@ GoClaw CLI v1.0.0 (commit: abc1234, built: 2026-03-15T10:00:00Z)
                  Yes (env set) → Use env value
                  │
                  No → ┌─────────────────────┐
-                      │ Check stdout is TTY │
+                      │ Check profile output│
                       └────────┬────────────┘
                                │
-                        Yes → "table" (human)
+                        Yes → Use profile default
                         │
-                        No → "json" (machine/CI)
+                        No → ┌─────────────────────┐
+                             │ Check stdout is TTY │
+                             └────────┬────────────┘
+                                      │
+                               Yes → "table" (human)
+                               │
+                               No → "json" (machine/CI)
 ```
 
 ### Error Mapping for AI Agents

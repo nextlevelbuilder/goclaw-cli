@@ -1,7 +1,7 @@
 # Phase 3 — AI-Critical Fillers
 
 **Priority:** 🔥 critical
-**Status:** not-started
+**Status:** complete
 **Estimated LoC:** ~250 (excl. tests)
 **Estimated PR size:** ≤ 500 LoC incl. tests
 
@@ -103,16 +103,16 @@ cmd/
 
 ## Todo List
 
-- [ ] config: profile struct + List/Create/Delete/Use/Current
-- [ ] config: legacy migration (config.yaml → profiles/default/config.yaml)
-- [ ] root: --profile flag + GOCLAW_PROFILE env + precedence
-- [ ] keyring: profile-namespaced token key
-- [ ] cmd/profile.go: 5 subcommands
-- [ ] cmd/sessions.go: compact subcommand
-- [ ] cmd/health.go: WS health probe
-- [ ] cmd/traces.go: --since/--agent/--status/--root-only/--limit flags
-- [ ] tests: profile, migrate, sessions_compact, health, traces_filters
-- [ ] docs sync: codebase-summary + CHANGELOG
+- [x] config: profile struct + List/Create/Delete/Use/Current
+- [x] config: legacy migration from flat config.yaml into profile list format
+- [x] root: --profile flag + GOCLAW_PROFILE env + precedence
+- [x] keyring: profile-namespaced token key
+- [x] cmd/profile.go: 5 subcommands
+- [x] cmd/sessions.go: compact subcommand
+- [x] cmd/health.go: WS health probe with HTTP fallback
+- [x] cmd/traces.go: --since/--agent/--status/--root-only/--limit flags
+- [x] tests: profile, migrate, sessions_compact, health, traces_filters
+- [x] docs sync: codebase-summary + CHANGELOG
 
 ## Success Criteria
 

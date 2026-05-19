@@ -565,18 +565,22 @@ Before submitting PR:
 **Format Auto-Detection (precedence):**
 1. `--output` flag (explicit)
 2. `GOCLAW_OUTPUT` environment variable
-3. `stdout` is a TTY → `"table"`
-4. else (piped/CI) → `"json"`
+3. Active profile output default
+4. `stdout` is a TTY → `"table"`
+5. else (piped/CI) → `"json"`
 
 **Implementation:**
 ```go
 // internal/output/tty.go
-func ResolveFormat(flagValue string) string {
+func ResolveFormatWithDefault(flagValue, profileDefault string) string {
     if flagValue != "" {
         return flagValue  // --output flag wins
     }
     if env := os.Getenv("GOCLAW_OUTPUT"); env != "" {
         return env  // env override
+    }
+    if profileDefault != "" {
+        return profileDefault
     }
     if IsTTY(os.Stdout) {
         return "table"  // Human-friendly

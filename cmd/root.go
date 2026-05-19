@@ -26,17 +26,15 @@ var rootCmd = &cobra.Command{
 			return fmt.Errorf("config load: %w", err)
 		}
 
-		// Resolve output format: flag > GOCLAW_OUTPUT env > TTY detect
+		// Resolve output format: flag > GOCLAW_OUTPUT env > profile default > TTY detect
 		// config.Load already applied env + flag precedence into cfg.OutputFormat,
-		// but only when the flag was explicitly Changed. Re-resolve here so that
-		// the TTY fallback kicks in when neither flag nor env is set.
+		// but re-resolve here so TTY fallback kicks in when neither flag nor env
+		// is set while preserving a profile-level output default.
 		flagVal := ""
 		if cmd.Flags().Changed("output") {
 			flagVal, _ = cmd.Flags().GetString("output")
-		} else if v := os.Getenv("GOCLAW_OUTPUT"); v != "" {
-			flagVal = v
 		}
-		cfg.OutputFormat = output.ResolveFormat(flagVal)
+		cfg.OutputFormat = output.ResolveFormatWithDefault(flagVal, cfg.ProfileOutputFormat)
 
 		printer = output.NewPrinter(cfg.OutputFormat)
 		return nil

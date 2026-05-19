@@ -72,6 +72,22 @@ func TestResolveFormat_InvalidEnvFallsThrough(t *testing.T) {
 	}
 }
 
+func TestResolveFormatWithDefault_ProfileDefault(t *testing.T) {
+	t.Setenv("GOCLAW_OUTPUT", "")
+	got := ResolveFormatWithDefault("", "yaml")
+	if got != "yaml" {
+		t.Errorf("profile default should win before TTY fallback: got %q, want yaml", got)
+	}
+}
+
+func TestResolveFormatWithDefault_EnvBeatsProfileDefault(t *testing.T) {
+	t.Setenv("GOCLAW_OUTPUT", "json")
+	got := ResolveFormatWithDefault("", "yaml")
+	if got != "json" {
+		t.Errorf("env should win over profile default: got %q, want json", got)
+	}
+}
+
 func TestResolveFormat_InvalidFlagPassedThrough(t *testing.T) {
 	// Invalid flag values pass through — cobra validation catches them.
 	got := ResolveFormat("xml")

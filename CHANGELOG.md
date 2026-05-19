@@ -5,7 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — Domain Coverage Expansion (P0–P2)
+## [Unreleased] — Domain Coverage Expansion (P0–P3)
 
 ### Added
 
@@ -27,8 +27,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `goclaw teams workspace upload` and `goclaw teams workspace move` — multipart upload + rename for team workspace.
 - `goclaw packages github-releases` — list GitHub releases for tracked packages.
 
+**P3 — AI-critical fillers**
+- `goclaw profile` (list, current, create, use, delete) — first-class CLI profile management with safe profile names.
+- `GOCLAW_PROFILE` — per-command profile selection precedence between `--profile` and active config.
+- `goclaw sessions compact <key>` — invokes WS RPC `sessions.compact` behind destructive confirmation.
+- `goclaw health` — uses WS RPC `health` when authenticated, retaining unauthenticated HTTP `/health` fallback.
+- `goclaw traces list --since --agent --status --root-only --limit` — expanded filters for automation-friendly trace search.
+
 ### Notes
 - All new commands honor the AI-first ergonomics contract: `--output=json` envelope, central error handler, `--yes` for destructive ops, `--quiet` for CI.
+- P4/P5 backlog was re-swept against the current CLI surface; already-covered items were removed from residual scope before the next implementation pass.
 - Out of scope: OpenAI-compatible `/chat/completions` and `/v1/responses` endpoints (client APIs, not admin CLI surface).
 
 ---

@@ -195,19 +195,44 @@ make clean
 
 ### Create Release (Automated via GitHub Actions)
 
-**Trigger Release:**
+Releases are branch-driven and generated from conventional commits through
+`go-semantic-release` + GoReleaser.
+
+**Beta release from `dev`:**
 
 ```bash
-# Create and push tag
-git tag v1.0.0
-git push origin v1.0.0
+# Merge or push conventional commits to dev
+git push origin dev
 
 # GitHub Actions automatically:
-# 1. Runs go vet and go test
-# 2. Builds for all platforms (GoReleaser)
-# 3. Creates checksums
-# 4. Publishes release to GitHub
+# 1. Runs build, vet, tests, race detector
+# 2. Calculates the next beta version from commits
+# 3. Creates a prerelease tag like v0.6.0-beta.1
+# 4. Builds all platform archives with GoReleaser
+# 5. Generates changelog from commits and uploads CHANGELOG.md
 ```
+
+**Stable release from `main`:**
+
+```bash
+# Merge or push conventional commits to main
+git push origin main
+
+# GitHub Actions automatically:
+# 1. Runs the same validation gate
+# 2. Calculates next stable semver from commits
+# 3. Creates a stable tag like v0.6.0
+# 4. Publishes binaries, checksums, release notes, and changelog
+```
+
+**Version bump rules:**
+
+| Commit type | Release impact |
+|-------------|----------------|
+| `fix:` | patch |
+| `feat:` | minor |
+| `feat!:` or `BREAKING CHANGE:` | major |
+| `docs:`, `test:`, `ci:` | included/excluded by release tooling depending on changelog filters; no feature bump by default |
 
 **Verify Release:**
 
@@ -320,14 +345,14 @@ jobs:
 4. Run `go vet` (linting)
 5. Run tests with race detector
 
-#### release.yaml (Build & Release on Tag)
+#### release.yaml (Semantic Release + GoReleaser)
 
 ```yaml
 name: Release
 
 on:
   push:
-    tags: ['v*']
+    branches: [main, dev]
 
 permissions:
   contents: write
@@ -342,22 +367,33 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25'
-      - uses: goreleaser/goreleaser-action@v6
+      - name: Build
+        run: go build ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -count=1 ./...
+      - uses: go-semantic-release/action@v1
         with:
-          version: '~> v2'
-          args: release --clean
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          hooks: goreleaser
+          changelog-file: CHANGELOG.md
+          prepend: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
 **Triggers:**
-- On push of tags matching `v*` (e.g., v1.0.0)
+- Push to `dev`: prerelease beta stream.
+- Push to `main`: stable release stream.
 
 **Steps:**
 1. Checkout full history
 2. Setup Go 1.25
-3. Run GoReleaser v2
-4. Build and publish to GitHub Releases
+3. Run build, vet, test, race detector
+4. Compute next SemVer from conventional commits
+5. Run GoReleaser through the semantic-release hook
+6. Publish GitHub Release assets and generated changelog
 
 ---
 
@@ -425,7 +461,8 @@ docker run -it \
 |----------|---------|---------|----------|
 | `GOCLAW_SERVER` | GoClaw server URL | `https://goclaw.example.com` | Yes |
 | `GOCLAW_TOKEN` | Authentication token | `sk_prod_abc123xyz` | Yes* |
-| `GOCLAW_OUTPUT` | Output format | `json`, `table`, `yaml` | No (default: table) |
+| `GOCLAW_OUTPUT` | Output format | `json`, `table`, `yaml` | No (overrides profile/default output) |
+| `GOCLAW_PROFILE` | Config profile name | `staging` | No |
 
 *Token stored in OS keyring if using `auth login` interactively.
 
@@ -436,7 +473,7 @@ docker run -it \
 | `--server` | `GOCLAW_SERVER` | Override server URL | `--server https://staging.example.com` |
 | `--token` | `GOCLAW_TOKEN` | Override token | `--token new-token` |
 | `--output, -o` | `GOCLAW_OUTPUT` | Output format | `--output json` |
-| `--profile` | — | Select config profile | `--profile staging` |
+| `--profile` | `GOCLAW_PROFILE` | Select config profile | `--profile staging` |
 | `--yes, -y` | — | Skip confirmation prompts | `--yes` |
 | `--verbose, -v` | — | Enable debug logging | `--verbose` |
 | `--insecure` | — | Skip TLS verification | `--insecure` |
@@ -455,17 +492,18 @@ docker run -it \
    export GOCLAW_SERVER=https://staging.com
    goclaw agents list
 
-3. Config File (~/.goclaw/config.yaml)
+3. Config Profile (~/.goclaw/config.yaml)
    active_profile: production
    profiles:
      - name: production
        server: https://goclaw.example.com
+       output: table
 
-4. Profile Defaults
-   If --profile staging specified and exists in config
+4. Profile Output Default
+   Used when --output and GOCLAW_OUTPUT are absent
 
 5. Built-in Defaults
-   OutputFormat: "table"
+   stdout TTY => table, piped/CI => json
    Insecure: false
 ```
 

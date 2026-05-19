@@ -1,9 +1,28 @@
 # GoClaw CLI - Project Roadmap
 
-**Last Updated:** 2026-05-18
+**Last Updated:** 2026-05-19
 **Phase Structure:** Legacy Phases 1-9 (bootstrap → CI/CD) + AI-First Expansion Phases 0-5 (2026-04-15)
-**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P4 ✓ COMPLETE; Super Admin API Parity ✓ COMPLETE
-**Next Phase:** Route-drift monitoring and any deferred low-priority endpoint parity.
+**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P4 ✓ COMPLETE; Super Admin API Parity ✓ COMPLETE; Domain Coverage P3 ✓ COMPLETE
+**Next Phase:** Domain Coverage residuals: P4 UX polish leftovers, then P5 team attachment download + evolution skill apply.
+
+---
+
+## 2026-05-19: Domain Coverage P3 ✓ COMPLETE
+
+**Objective:** Close AI-critical filler gaps for profile selection, session compaction, health probing, and trace filtering.
+
+**Deliverables:**
+- [x] Added `profile` command group with list/current/create/use/delete.
+- [x] Added `GOCLAW_PROFILE` precedence between `--profile` and active config.
+- [x] Added legacy single-profile config migration that removes token from config.yaml.
+- [x] Added `sessions compact <key>` via WS RPC `sessions.compact`.
+- [x] Updated `health` to use WS RPC `health` when authenticated, with HTTP fallback.
+- [x] Added `traces list --since --root-only` on top of existing agent/status/limit filters.
+- [x] Added focused tests for profile, migration, session compact, health, and traces filters.
+
+**Validation:** `go test ./...`.
+
+**Backlog Sweep:** P4/P5 verification on 2026-05-19 removed covered items from future scope: `agents prompt-preview`, `storage size`, `channels writers groups`, `contacts unmerge`, `agents instances`, `mcp servers tools`, `agents evolution update`, and `tts synthesize`.
 
 ---
 

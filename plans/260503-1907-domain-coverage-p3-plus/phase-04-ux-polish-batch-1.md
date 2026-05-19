@@ -1,8 +1,8 @@
 # Phase 4 — UX Polish Batch 1
 
 **Priority:** 🟡 medium
-**Status:** not-started
-**Estimated LoC:** ~400 (excl. tests)
+**Status:** verified residuals — not-started
+**Estimated LoC:** ~250 (excl. tests)
 **Estimated PR size:** ≤ 500 LoC incl. tests
 **Depends on:** P3 (multi-profile stable)
 
@@ -12,20 +12,20 @@
 
 ## Overview
 
-Composite/UX commands wrapping endpoints already shipped server-side. No server FRs needed. Most are 1-file each.
+Composite/UX commands wrapping endpoints already shipped server-side. No server FRs needed. Sweep on 2026-05-19 found several planned items already covered.
 
 ## Scope
 
 | # | Command | Source | Type |
 |---|---|---|---|
-| P2 | `codex-pool activity --agent=… \| --provider=…` | unify `agents codex-pool-activity` + `providers codex-pool-activity` | umbrella alias |
-| D3 | `api-keys rotate <id>` | composite: create-new + emit raw + revoke-old | composite |
-| D6 | `config defaults` | WS `config.defaults` (`pkg/protocol/methods.go` ConfigDefaults) | direct |
-| E3 | `chat replay <session-key>` | composite: `sessions preview` + `chat history` | composite |
-| E1 | `chat sessions resume <key>` | UX wrapper around `chat send --session-key=<key>` | alias |
-| X1 | `agents prompt-preview <id>` | `GET /v1/agents/{id}/system-prompt-preview` | direct |
-| X6 | `tools invoke <name> [--args=…]` | `internal/http/tools_invoke.go` | direct |
-| X7 | `storage size` | `GET /v1/storage/size` | direct |
+| P2 | `codex-pool activity --agent=… \| --provider=…` | unify `agents codex-pool-activity` + `providers codex-pool-activity` | residual |
+| D3 | `api-keys rotate <id>` | composite: create-new + emit raw + revoke-old | residual |
+| D6 | `config defaults` | WS `config.defaults` (`pkg/protocol/methods.go` ConfigDefaults) | residual |
+| E3 | `chat replay <session-key>` | composite: `sessions preview` + `chat history` | residual |
+| E1 | `chat sessions resume <key>` | UX wrapper around `chat send --session-key=<key>` | residual |
+| X1 | `agents prompt-preview <id>` | `cmd/agents_admin.go` | covered |
+| X6 | `tools invoke <name>` | `cmd/tools_custom.go`; residual is `--args=@file.json` alias only | partial |
+| X7 | `storage size` | `cmd/storage.go` | covered |
 
 ## Related Code Files
 
@@ -33,15 +33,13 @@ Composite/UX commands wrapping endpoints already shipped server-side. No server 
 
 - `cmd/api_keys.go` — add `rotate`
 - `cmd/chat.go` — add `replay` + `sessions resume`
-- `cmd/agents.go` or `cmd/agents_misc.go` — add `prompt-preview`
-- `cmd/tools.go` — add `invoke` (read-write surface, not config-only)
+- `cmd/tools_custom.go` — add `--args` alias / `@file` support for existing `tools invoke`
 - `CHANGELOG.md`, `docs/codebase-summary.md`
 
 ### Create
 
 - `cmd/codex_pool.go` — umbrella group
 - `cmd/config_defaults.go`
-- `cmd/storage.go`
 - companion `_test.go` per file
 
 ### Delete
@@ -53,24 +51,22 @@ Composite/UX commands wrapping endpoints already shipped server-side. No server 
 1. `cmd/codex_pool.go`: register top-level `codex-pool activity` + flag dispatch (`--agent` vs `--provider`). Mark old commands deprecated in Long help.
 2. `cmd/api_keys.go::rotate`: orchestrate create → emit raw → revoke-old in single command, JSON output of new key.
 3. `cmd/config_defaults.go`: WS `config.defaults`, raw passthrough.
-4. `cmd/storage.go`: HTTP GET `/v1/storage/size`, table + JSON.
-5. Extend `cmd/chat.go` with `replay <key>` (composite preview+history, stream JSONL to stdout).
-6. Add `cmd/chat.go::sessions resume <key>` as alias for `chat send --session-key=<key>` (read stdin/--message body).
-7. Extend agents group with `prompt-preview <id>` — GET endpoint, `--format=raw|markdown`.
-8. Extend tools group with `invoke <name>` — POST body via `--args=@file.json` or literal JSON.
-9. Tests for each. Composites: assert sequence of HTTP calls via httptest.
-10. Docs sync.
+4. Extend `cmd/chat.go` with `replay <key>` (composite preview+history, stream JSONL to stdout).
+5. Add `cmd/chat.go::sessions resume <key>` as alias for `chat send --session-key=<key>` (read stdin/--message body).
+6. Extend existing `tools invoke <name>` with `--args=@file.json` or literal JSON alias.
+7. Tests for each. Composites: assert sequence of HTTP/WS calls via httptest.
+8. Docs sync.
 
 ## Todo List
 
 - [ ] cmd/codex_pool.go umbrella + alias deprecation
 - [ ] cmd/api_keys.go rotate composite
 - [ ] cmd/config_defaults.go
-- [ ] cmd/storage.go (size)
 - [ ] cmd/chat.go replay composite
 - [ ] cmd/chat.go sessions resume alias
-- [ ] cmd/agents prompt-preview
-- [ ] cmd/tools invoke (with @file + literal JSON args)
+- [x] cmd/agents prompt-preview
+- [ ] cmd/tools invoke `--args` alias (existing `--params` + `--param` already covered)
+- [x] cmd/storage.go (size)
 - [ ] tests per command
 - [ ] CHANGELOG + docs
 

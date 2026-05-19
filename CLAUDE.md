@@ -41,7 +41,7 @@ internal/
 These patterns are **locked** — do not change without updating CHANGELOG.md.
 
 ### Output format auto-detection
-Precedence: `--output` flag > `GOCLAW_OUTPUT` env > TTY detection
+Precedence: `--output` flag > `GOCLAW_OUTPUT` env > active profile output default > TTY detection
 - stdout is TTY → `"table"` (human)
 - stdout is piped/redirected → `"json"` (machine)
 
@@ -84,7 +84,7 @@ All command errors bubble via `return err` to `cmd.Execute()` → `output.PrintE
 - `readContent()` — read from `@filepath` or literal string
 - `unmarshalMap()` / `unmarshalList()` — parse JSON responses
 - `printer.Print()` — output in configured format
-- `output.ResolveFormat(flagVal)` — resolve format with TTY fallback
+- `output.ResolveFormatWithDefault(flagVal, profileDefault)` — resolve format with profile default + TTY fallback
 - `output.FromError(err)` — map error to exit code
 - `output.PrintError(err, format)` — format-aware error output
 - `client.FollowStream(ctx, ...)` — persistent WS streaming with reconnect

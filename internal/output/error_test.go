@@ -3,6 +3,7 @@ package output
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 )
@@ -106,13 +107,13 @@ type fakeAPIError struct {
 	statusCode int
 }
 
-func (f *fakeAPIError) Error() string       { return f.msg }
-func (f *fakeAPIError) ErrorCode() string   { return f.code }
+func (f *fakeAPIError) Error() string        { return f.msg }
+func (f *fakeAPIError) ErrorCode() string    { return f.code }
 func (f *fakeAPIError) ErrorMessage() string { return f.msg }
-func (f *fakeAPIError) ErrorDetails() any   { return nil }
-func (f *fakeAPIError) IsRetryable() bool   { return false }
-func (f *fakeAPIError) RetryAfter() int     { return 0 }
-func (f *fakeAPIError) HTTPStatus() int     { return f.statusCode }
+func (f *fakeAPIError) ErrorDetails() any    { return nil }
+func (f *fakeAPIError) IsRetryable() bool    { return false }
+func (f *fakeAPIError) RetryAfter() int      { return 0 }
+func (f *fakeAPIError) HTTPStatus() int      { return f.statusCode }
 
 func TestFromError_KnownServerCode(t *testing.T) {
 	cases := []struct {
@@ -145,6 +146,17 @@ func TestFromError_HTTPStatusFallback(t *testing.T) {
 	err := &fakeAPIError{code: "UNKNOWN_CODE", statusCode: 403}
 	if got := FromError(err); got != ExitAuth {
 		t.Errorf("FromError via HTTP 403 = %d, want %d", got, ExitAuth)
+	}
+}
+
+func TestFromError_WrappedStructuredError(t *testing.T) {
+	err := fmt.Errorf("config load: %w", &fakeAPIError{code: "NOT_FOUND", msg: "profile missing"})
+	if got := FromError(err); got != ExitNotFound {
+		t.Errorf("FromError(wrapped NOT_FOUND) = %d, want %d", got, ExitNotFound)
+	}
+	detail := toErrorDetail(err)
+	if detail.Code != "NOT_FOUND" || detail.Message != "profile missing" {
+		t.Fatalf("unexpected wrapped detail: %#v", detail)
 	}
 }
 

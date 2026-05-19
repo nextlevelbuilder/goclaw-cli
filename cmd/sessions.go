@@ -133,6 +133,31 @@ var sessionsLabelCmd = &cobra.Command{
 	},
 }
 
+var sessionsCompactCmd = &cobra.Command{
+	Use:   "compact <sessionKey>",
+	Short: "Compact a session context window",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if !tui.Confirm(fmt.Sprintf("Compact session %s?", args[0]), cfg.Yes) {
+			return nil
+		}
+		ws, err := newWS("cli")
+		if err != nil {
+			return err
+		}
+		if _, err := ws.Connect(); err != nil {
+			return fmt.Errorf("connect: %w", err)
+		}
+		defer ws.Close()
+		resp, err := ws.Call("sessions.compact", map[string]any{"session_key": args[0]})
+		if err != nil {
+			return err
+		}
+		printer.Print(jsonToMap(resp))
+		return nil
+	},
+}
+
 func init() {
 	sessionsListCmd.Flags().String("agent", "", "Filter by agent ID")
 	sessionsListCmd.Flags().String("user", "", "Filter by user ID")
@@ -140,6 +165,6 @@ func init() {
 	sessionsLabelCmd.Flags().String("label", "", "Session label")
 	_ = sessionsLabelCmd.MarkFlagRequired("label")
 
-	sessionsCmd.AddCommand(sessionsListCmd, sessionsPreviewCmd, sessionsDeleteCmd, sessionsResetCmd, sessionsLabelCmd)
+	sessionsCmd.AddCommand(sessionsListCmd, sessionsPreviewCmd, sessionsDeleteCmd, sessionsResetCmd, sessionsLabelCmd, sessionsCompactCmd)
 	rootCmd.AddCommand(sessionsCmd)
 }

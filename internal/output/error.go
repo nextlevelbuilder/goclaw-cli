@@ -2,6 +2,7 @@ package output
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -107,7 +108,8 @@ func toErrorDetail(err error) *ErrorDetail {
 		return &ErrorDetail{Code: "UNKNOWN", Message: "unknown error"}
 	}
 	// Prefer the rich interface if available
-	if ae, ok := err.(apiErrorIface); ok {
+	var ae apiErrorIface
+	if errors.As(err, &ae) {
 		return &ErrorDetail{
 			Code:         ae.ErrorCode(),
 			Message:      ae.ErrorMessage(),
@@ -117,7 +119,8 @@ func toErrorDetail(err error) *ErrorDetail {
 		}
 	}
 	// Check for *ErrorDetail itself
-	if d, ok := err.(*ErrorDetail); ok {
+	var d *ErrorDetail
+	if errors.As(err, &d) {
 		return d
 	}
 	// Plain error
@@ -136,20 +139,23 @@ func FromError(err error) int {
 	if err == nil {
 		return ExitSuccess
 	}
-	if ae, ok := err.(apiErrorIface); ok {
+	var ae apiErrorIface
+	if errors.As(err, &ae) {
 		code := ae.ErrorCode()
 		if c := MapServerCode(code); c != ExitGeneric {
 			return c
 		}
 		// Try HTTP status fallback
-		if aws, ok := err.(apiErrorWithStatus); ok {
+		var aws apiErrorWithStatus
+		if errors.As(err, &aws) {
 			if s := aws.HTTPStatus(); s > 0 {
 				return MapHTTPStatus(s)
 			}
 		}
 	}
 	// Try ErrorDetail
-	if d, ok := err.(*ErrorDetail); ok {
+	var d *ErrorDetail
+	if errors.As(err, &d) {
 		if c := MapServerCode(d.Code); c != ExitGeneric {
 			return c
 		}

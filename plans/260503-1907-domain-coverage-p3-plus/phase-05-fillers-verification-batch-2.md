@@ -1,8 +1,8 @@
 # Phase 5 — Fillers & Verification Batch 2
 
 **Priority:** 🟡 medium
-**Status:** not-started
-**Estimated LoC:** ~250 (excl. tests; may shrink after verify sweep)
+**Status:** verified residuals — not-started
+**Estimated LoC:** ~150 (excl. tests)
 **Depends on:** P3 + P4 merged
 
 ## Context Links
@@ -11,7 +11,7 @@
 
 ## Overview
 
-Final fillers. **Begins with a 30-min verification sweep** — several "missing" items are flagged "verify" because grep matched server file but not CLI registration. Some may already exist under different command paths.
+Final fillers. Verification sweep completed 2026-05-19; most "missing" items were already present under different command paths.
 
 ## Verification Sweep (do FIRST)
 
@@ -19,13 +19,13 @@ For each item below, grep both repos and confirm gap before scoping LoC:
 
 | ID | Server source | Verify CLI | Likely outcome |
 |---|---|---|---|
-| C1 | `GET /v1/channels/instances/{id}/writers/groups` | `cmd/channels_writers.go` Use list | confirmed gap |
-| C4 | `POST /v1/contacts/unmerge` | `cmd/channels_contacts.go` | likely gap |
-| X3 | `GET /v1/agents/{id}/instances` + files | `cmd/agents_instances.go` | partial — verify sub-routes |
-| X4 | `GET /v1/mcp/servers/{id}/tools` | `cmd/mcp_servers.go` | likely covered |
-| X8 | `PATCH /v1/agents/{id}/evolution/suggestions/{sid}` | `cmd/agents_evolution.go` | likely missing |
-| X11 | `GET /v1/teams/{teamId}/attachments/{aid}/download` | `cmd/teams.go` / `cmd/teams_*.go` | likely missing |
-| X12 | `internal/http/evolution_skill_apply.go` | `cmd/agents_evolution.go` | likely missing |
+| C1 | `GET /v1/channels/instances/{id}/writers/groups` | `cmd/channels_writers.go` | covered: `channels writers groups` |
+| C4 | `POST /v1/contacts/unmerge` | `cmd/channels_contacts.go`, `cmd/contacts.go` | covered: `channels contacts unmerge`, `contacts unmerge` |
+| X3 | `GET /v1/agents/{id}/instances` + files | `cmd/agents_instances.go` | covered: list/get-file/set-file/metadata |
+| X4 | `GET /v1/mcp/servers/{id}/tools` | `cmd/mcp.go` | covered: `mcp servers tools` |
+| X8 | `PATCH /v1/agents/{id}/evolution/suggestions/{sid}` | `cmd/agents_evolution.go` | covered: `agents evolution update` |
+| X11 | `GET /v1/teams/{teamId}/attachments/{aid}/download` | `cmd/teams.go` / `cmd/teams_*.go` | residual |
+| X12 | `internal/http/evolution_skill_apply.go` | `cmd/agents_evolution.go` | residual |
 
 After sweep, drop covered items, finalize scope. Report sweep results in PR description.
 
@@ -33,31 +33,26 @@ After sweep, drop covered items, finalize scope. Report sweep results in PR desc
 
 | # | Command | Server route | File |
 |---|---|---|---|
-| C1 | `channels writers groups <id>` | `GET /v1/channels/instances/{id}/writers/groups` | `cmd/channels_writers.go` |
-| C4 | `contacts unmerge <merge-id>` | `POST /v1/contacts/unmerge` | `cmd/channels_contacts.go` |
-| X3 | `agents instances list <agent-id>` + `agents instances files <agent-id> <user-id>` | server | `cmd/agents_instances.go` |
-| X4 | `mcp servers tools <id>` | `GET /v1/mcp/servers/{id}/tools` | `cmd/mcp_servers.go` |
-| X8 | `agents evolution suggestions update <id> <sid>` | `PATCH …/suggestions/{sid}` | `cmd/agents_evolution.go` |
 | X11 | `teams attachments download <team-id> <att-id> [--out=…]` | `GET …/attachments/{aid}/download` | `cmd/teams_workspace.go` or new `cmd/teams_attachments.go` |
 | X12 | `agents evolution skill apply <id> <sid>` | `internal/http/evolution_skill_apply.go` | `cmd/agents_evolution.go` |
 
 ## Implementation Steps
 
-1. **Sweep first.** Use Grep on `cmd/*.go` for each route literal + each `Use:` line. Document results in PR description.
-2. For each confirmed gap, extend the existing module file (no new files unless >200 LoC pushes existing over budget).
-3. `teams attachments download` — binary file save via signed-URL pattern (`internal/client/signed_download.go`); reuse helper.
+1. Extend the existing module file for each confirmed residual (no new files unless >200 LoC pushes existing over budget).
+2. `teams attachments download` — binary file save via signed-URL pattern (`internal/client/signed_download.go`); reuse helper.
+3. `agents evolution skill apply` — wire the server route and expose structured output.
 4. Add `_test.go` cases for each.
 5. CHANGELOG + docs sync.
 
 ## Todo List
 
-- [ ] verify sweep on 7 items (grep both repos)
-- [ ] drop confirmed-covered items, finalize scope
-- [ ] cmd/channels_writers.go: groups subcommand
-- [ ] cmd/channels_contacts.go: unmerge
-- [ ] cmd/agents_instances.go: list + files (if missing)
-- [ ] cmd/mcp_servers.go: tools subcommand
-- [ ] cmd/agents_evolution.go: suggestions update + skill apply
+- [x] verify sweep on 7 items (grep CLI command surface)
+- [x] drop confirmed-covered items, finalize scope
+- [x] cmd/channels_writers.go: groups subcommand
+- [x] cmd/channels_contacts.go: unmerge
+- [x] cmd/agents_instances.go: list + files
+- [x] cmd/mcp_servers.go: tools subcommand
+- [ ] cmd/agents_evolution.go: skill apply
 - [ ] teams attachments download (reuse signed_download)
 - [ ] tests per command
 - [ ] CHANGELOG + docs

@@ -26,6 +26,12 @@ var tracesListCmd = &cobra.Command{
 		if v, _ := cmd.Flags().GetString("status"); v != "" {
 			q.Set("status", v)
 		}
+		if v, _ := cmd.Flags().GetString("since"); v != "" {
+			q.Set("since", v)
+		}
+		if v, _ := cmd.Flags().GetBool("root-only"); v {
+			q.Set("root_only", "true")
+		}
 		if v, _ := cmd.Flags().GetInt("limit"); v > 0 {
 			q.Set("limit", fmt.Sprintf("%d", v))
 		}
@@ -232,6 +238,8 @@ var usageBreakdownCmd = &cobra.Command{
 func init() {
 	tracesListCmd.Flags().String("agent", "", "Filter by agent ID")
 	tracesListCmd.Flags().String("status", "", "Filter: running, success, error")
+	tracesListCmd.Flags().String("since", "", "Filter by relative or ISO timestamp, e.g. 1h or 2026-05-19T00:00:00Z")
+	tracesListCmd.Flags().Bool("root-only", false, "Only show root traces")
 	tracesListCmd.Flags().Int("limit", 20, "Max results")
 	tracesExportCmd.Flags().StringP("output", "f", "", "Output file (default: <traceID>.json.gz)")
 

@@ -53,9 +53,10 @@ echo "Analyze this log" | goclaw chat myagent
 | Command | Description |
 |---------|-------------|
 | `auth` | Login, logout, device pairing, profile management |
+| `profile` | List, create, switch, inspect, and delete CLI profiles |
 | `agents` | CRUD, shares, delegation links, per-user instances |
 | `chat` | Interactive or single-shot messaging with streaming |
-| `sessions` | List, preview, delete, reset, label |
+| `sessions` | List, preview, delete, reset, label, compact |
 | `skills` | Upload, manage, grant/revoke access |
 | `mcp` | MCP server management, grants, access requests |
 | `providers` | LLM provider CRUD, model listing, verification |
@@ -63,7 +64,7 @@ echo "Analyze this log" | goclaw chat myagent
 | `cron` | Scheduled jobs CRUD, trigger, run history |
 | `teams` | Team management, task board, workspace |
 | `channels` | Channel instances, contacts, pending messages |
-| `traces` | LLM trace viewer, export |
+| `traces` | LLM trace viewer, filters, export |
 | `memory` | Memory documents, semantic search |
 | `knowledge-graph` | Entity extraction, linking, querying |
 | `usage` | Usage analytics and cost breakdown |
@@ -321,10 +322,11 @@ GoClaw CLI auto-detects the appropriate output format:
 |-----------|---------------|
 | stdout is a terminal (TTY) | `table` — human-readable aligned columns |
 | stdout is piped / redirected | `json` — machine-readable, one object per response |
+| active profile has an output default | configured profile default — unless env/flag overrides it |
 | `GOCLAW_OUTPUT=yaml` env set | `yaml` — regardless of TTY |
 | `--output` / `-o` flag set | exact value — overrides everything |
 
-**Precedence (highest → lowest):** `--output` flag > `GOCLAW_OUTPUT` env > TTY detection
+**Precedence (highest → lowest):** `--output` flag > `GOCLAW_OUTPUT` env > active profile output default > TTY detection
 
 ```bash
 # Explicit format (always wins)
@@ -391,7 +393,16 @@ profiles:
 Switch profiles:
 
 ```bash
+goclaw profile list
+goclaw profile use staging
 goclaw auth use-context staging
+```
+
+One-shot profile override:
+
+```bash
+goclaw --profile staging agents list
+GOCLAW_PROFILE=staging goclaw traces list --since=1h --root-only -o json
 ```
 
 ## Claude Code Skill

@@ -11,14 +11,15 @@ import (
 
 // Config holds CLI configuration loaded from file, env, and flags.
 type Config struct {
-	Server       string `yaml:"server"`
-	Token        string `yaml:"token"`
-	OutputFormat string `yaml:"output"`
-	Profile      string `yaml:"profile"`
-	TenantID     string `yaml:"-"` // never persisted — flag/env only
-	Insecure     bool   `yaml:"insecure"`
-	Verbose      bool   `yaml:"verbose"`
-	Yes          bool   `yaml:"-"` // never persisted
+	Server              string `yaml:"server"`
+	Token               string `yaml:"token"`
+	OutputFormat        string `yaml:"output"`
+	ProfileOutputFormat string `yaml:"-"`
+	Profile             string `yaml:"profile"`
+	TenantID            string `yaml:"-"` // never persisted — flag/env only
+	Insecure            bool   `yaml:"insecure"`
+	Verbose             bool   `yaml:"verbose"`
+	Yes                 bool   `yaml:"-"` // never persisted
 }
 
 // Profile represents a named server connection profile.
@@ -35,6 +36,14 @@ type Profile struct {
 type FileConfig struct {
 	ActiveProfile string    `yaml:"active_profile"`
 	Profiles      []Profile `yaml:"profiles"`
+
+	// Legacy single-profile fields. They are migrated into Profiles on load and
+	// omitted on save so tokens do not remain in config.yaml.
+	Server       string `yaml:"server,omitempty"`
+	Token        string `yaml:"token,omitempty"`
+	OutputFormat string `yaml:"output,omitempty"`
+	Insecure     bool   `yaml:"insecure,omitempty"`
+	Verbose      bool   `yaml:"verbose,omitempty"`
 }
 
 // Dir returns the config directory path (~/.goclaw/).
@@ -54,21 +63,23 @@ func Load(cmd *cobra.Command) (*Config, error) {
 	cfg := &Config{OutputFormat: "table"}
 
 	// 1. Load from file
-	if fc, err := loadFile(); err == nil {
-		profileName, _ := cmd.Flags().GetString("profile")
-		if profileName == "" {
-			profileName = fc.ActiveProfile
-		}
+	fc, err := loadFile()
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+	profileName := resolveProfileName(cmd, fc)
+	cfg.Profile = profileName
+	if fc != nil {
 		if p := fc.FindProfile(profileName); p != nil {
 			cfg.Server = p.Server
 			cfg.Profile = p.Name
 			if p.OutputFormat != "" {
 				cfg.OutputFormat = p.OutputFormat
+				cfg.ProfileOutputFormat = p.OutputFormat
 			}
-			// Token loaded from credential store, not config file
-			if tokenData, err := os.ReadFile(filepath.Join(Dir(), "credentials_"+p.Name)); err == nil {
-				cfg.Token = string(tokenData)
-			}
+			cfg.Token = loadStoredToken(p.Name)
+		} else if shouldRequireProfile(cmd, profileName) {
+			return nil, &ProfileNotFoundError{Name: profileName}
 		}
 	}
 
@@ -112,77 +123,19 @@ func Load(cmd *cobra.Command) (*Config, error) {
 	return cfg, nil
 }
 
-// Save persists a profile to the config file.
-func Save(profile Profile, setActive bool) error {
-	fc, _ := loadFile()
-	if fc == nil {
-		fc = &FileConfig{}
-	}
-
-	// Upsert profile
-	found := false
-	for i, p := range fc.Profiles {
-		if p.Name == profile.Name {
-			fc.Profiles[i] = profile
-			found = true
-			break
-		}
-	}
-	if !found {
-		fc.Profiles = append(fc.Profiles, profile)
-	}
-	if setActive || fc.ActiveProfile == "" {
-		fc.ActiveProfile = profile.Name
-	}
-
-	return saveFile(fc)
-}
-
-// RemoveProfile deletes a profile from config.
-func RemoveProfile(name string) error {
-	fc, _ := loadFile()
-	if fc == nil {
-		return nil
-	}
-	for i, p := range fc.Profiles {
-		if p.Name == name {
-			fc.Profiles = append(fc.Profiles[:i], fc.Profiles[i+1:]...)
-			break
-		}
-	}
-	if fc.ActiveProfile == name {
-		fc.ActiveProfile = ""
-		if len(fc.Profiles) > 0 {
-			fc.ActiveProfile = fc.Profiles[0].Name
-		}
-	}
-	return saveFile(fc)
-}
-
-// ListProfiles returns all configured profiles and the active one.
-func ListProfiles() ([]Profile, string, error) {
-	fc, err := loadFile()
-	if err != nil {
-		return nil, "", err
-	}
-	return fc.Profiles, fc.ActiveProfile, nil
-}
-
-func (fc *FileConfig) FindProfile(name string) *Profile {
-	for _, p := range fc.Profiles {
-		if p.Name == name {
-			return &p
-		}
-	}
-	return nil
-}
-
 func loadFile() (*FileConfig, error) {
 	data, err := os.ReadFile(FilePath())
 	if err != nil {
 		return nil, err
 	}
-	return parseConfig(data)
+	fc, err := parseConfig(data)
+	if err != nil {
+		return nil, err
+	}
+	if err := migrateLegacyConfig(fc, data); err != nil {
+		return nil, err
+	}
+	return fc, nil
 }
 
 // parseConfig parses YAML bytes into FileConfig (exported for testing).

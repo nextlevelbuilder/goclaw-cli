@@ -23,7 +23,7 @@ Per YAGNI: shipping CLI stubs for endpoints that don't exist server-side = broke
 | C2 | `goclaw channels writers test <id>` | `POST /v1/channels/instances/{id}/writers/test` | 🟢 |
 | E2 | `goclaw chat sessions branch <key>` | `POST /v1/chat/sessions/{key}/branch` (fork/copy session state) | 🟡 |
 | E5 | `goclaw chat history --follow` | WS `chat.history.delta` push or SSE | 🟢 |
-| X5 | `goclaw tts synthesize --text=… --voice=…` | already exists `POST /v1/tts/synthesize` — verify; if exists, demote to P5 | 🟢 |
+| X5 | `goclaw tts synthesize --text=… --voice=…` | covered in `cmd/tts_http.go`; no server FR | closed |
 
 ## Recommended Issue Template (per item)
 
@@ -48,7 +48,7 @@ After endpoint ships, CLI will add `goclaw <command>` mapping 1:1.
 
 ## Todo List
 
-- [ ] File 7 issues in goclaw repo (skip X5 if `tts synthesize` already exists)
+- [ ] File 7 issues in goclaw repo (X5 closed; `tts synthesize` already exists)
 - [ ] Track issue numbers in this file
 - [ ] When server ships endpoint, demote item to a future CLI phase
 

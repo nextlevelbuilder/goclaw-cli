@@ -16,6 +16,23 @@ var healthCmd = &cobra.Command{
 		if cfg.Server == "" {
 			return client.ErrServerRequired
 		}
+		if cfg.Token != "" {
+			ws, err := newWS("cli")
+			if err != nil {
+				return err
+			}
+			if _, err := ws.Connect(); err != nil {
+				return fmt.Errorf("connect: %w", err)
+			}
+			defer ws.Close()
+			healthResp, err := ws.Call("health", nil)
+			if err != nil {
+				return fmt.Errorf("health: %w", err)
+			}
+			printer.Print(jsonToMap(healthResp))
+			return nil
+		}
+
 		c := client.NewHTTPClient(cfg.Server, cfg.Token, cfg.Insecure)
 		if err := c.HealthCheck(); err != nil {
 			return err

@@ -1,7 +1,7 @@
 # GoClaw CLI - Codebase Summary
 
-**Generated from:** `repomix-output.xml` (2026-04-15), updated manually 2026-05-18
-**Phase Status:** P0-P4 Complete (AI-First Expansion); Super Admin API Parity Complete
+**Generated from:** `repomix-output.xml` (2026-04-15), updated manually 2026-05-19
+**Phase Status:** P0-P4 Complete (AI-First Expansion); Super Admin API Parity Complete; Domain Coverage P3 Complete
 **Total Files:** 80+
 **Estimated Tokens:** 80,000+
 **Total Size:** 220+ KB
@@ -10,7 +10,7 @@
 
 ## Overview
 
-GoClaw CLI is a production-ready Go application providing comprehensive command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30+ command groups across modular command files with dual modes: interactive (human) and automation (CI/agent). Phases 0-4 (AI-first expansion) add AI ergonomics, admin/ops, migration, vault, and advanced agent/team/memory support. The 2026-05-18 super-admin parity work adds gateway upgrade, package updates, workstations, webhooks, MCP user credentials, secure env reveal, media/TTS/storage/channel fillers, and focused route-contract tests.
+GoClaw CLI is a production-ready Go application providing comprehensive command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30+ command groups across modular command files with dual modes: interactive (human) and automation (CI/agent). Phases 0-4 (AI-first expansion) add AI ergonomics, admin/ops, migration, vault, and advanced agent/team/memory support. The 2026-05-18 super-admin parity work adds gateway upgrade, package updates, workstations, webhooks, MCP user credentials, secure env reveal, media/TTS/storage/channel fillers, and focused route-contract tests. The 2026-05-19 P3 filler pass adds first-class profile commands, `GOCLAW_PROFILE`, `sessions compact`, WS health, and trace filter polish.
 
 **Key Metrics:**
 - **70+ command files** in `cmd/` (modularized for maintainability)
@@ -42,10 +42,11 @@ All files follow Cobra pattern: root command + subcommands.
 | File | Commands | LOC | Purpose |
 |------|----------|-----|---------|
 | `root.go` | `goclaw` (root), global flags | 52 | Root command + persistent flags |
-| `auth.go` | `auth`, `credentials` | 180+ | Login, logout, profile mgmt |
+| `auth.go` | `auth`, `credentials` | 180+ | Login, logout, legacy profile aliases |
+| `profile.go` | `profile` | 120+ | Profile list/current/create/use/delete |
 | `agents.go` | `agents` (list/get/create/update/delete) | 250+ | Agent CRUD operations |
 | `chat.go` | `chat` | 300+ | Interactive + streaming chat |
-| `sessions.go` | `sessions` (list/get/delete/reset/label) | 200+ | Session management |
+| `sessions.go` | `sessions` (list/get/delete/reset/label/compact) | 200+ | Session management + WS compaction |
 | `skills.go` | `skills` (list/upload/delete) | 200+ | Skill management |
 | `mcp.go` | `mcp` (list/add/remove/grants) | 250+ | MCP server management |
 | `providers.go` | `providers` (list/create/update/delete) | 200+ | LLM provider mgmt |
@@ -53,13 +54,13 @@ All files follow Cobra pattern: root command + subcommands.
 | `cron.go` | `cron` (list/create/delete/trigger) | 220+ | Scheduled job management |
 | `teams.go` | `teams` (list/create/members) | 270+ | Team management (largest file) |
 | `channels.go` | `channels` (list/contacts) | 200+ | Channel management |
-| `traces.go` | `traces` (list/export) | 180+ | LLM trace viewing |
+| `traces.go` | `traces` (list/export + filters) | 180+ | LLM trace viewing |
 | `memory.go` | `memory` (list/search/upsert) | 180+ | Memory document management |
 | `config_cmd.go` | `config` (get/apply/patch/permissions) | 230+ | Server config + permissions |
 | `logs.go` | `logs` | 120+ | Real-time log streaming |
 | `storage.go` | `storage` (list/download) | 150+ | Workspace file browser |
 | `admin.go` | Admin operations | 250+ | Admin commands |
-| `status.go` | `status` | 80+ | Server health check |
+| `status.go` | `status`, `health` | 100+ | Server status + HTTP/WS health check |
 | `version.go` | `version` | 60+ | Version display |
 | `api_keys.go` | `api-keys` (list/create/revoke) | 135 | API key management |
 | `api_docs.go` | `api-docs` (open/spec) | 82 | API documentation viewer |
@@ -130,7 +131,8 @@ internal/client/
 
 ```
 internal/config/
-└── config.go
+├── config.go
+└── profile.go
 ```
 
 **Features:**
@@ -140,8 +142,9 @@ internal/config/
 - `Load()` function: Implements precedence: flags > env > file > defaults
 - `Dir()`: Returns ~/.goclaw/
 - `FilePath()`: Returns ~/.goclaw/config.yaml
-- Multi-profile support with `FindProfile()`
-- Environment variables: GOCLAW_SERVER, GOCLAW_TOKEN, GOCLAW_OUTPUT
+- Multi-profile support with `FindProfile()`, `SetActiveProfile()`, and safe profile-name validation
+- Legacy single-profile config migration removes token from config.yaml and writes `credentials_<profile>`
+- Environment variables: GOCLAW_SERVER, GOCLAW_TOKEN, GOCLAW_OUTPUT, GOCLAW_PROFILE
 
 #### output/ — Output Formatting + Error Handling
 
@@ -161,8 +164,9 @@ internal/output/
 **TTY-aware format resolution (precedence):**
 1. `--output` flag (explicit)
 2. `GOCLAW_OUTPUT` environment variable
-3. stdout is TTY → `"table"`
-4. else → `"json"`
+3. active profile output default
+4. stdout is TTY → `"table"`
+5. else → `"json"`
 
 **Printer struct:**
 - Methods: `Print()`, `Error()`, `Success()`
@@ -465,8 +469,9 @@ Each level overrides the previous.
 
 ### Profile Management
 - Multiple profiles in `~/.goclaw/config.yaml`
-- Set active via `goclaw auth use-context <profile>`
+- Set active via `goclaw profile use <profile>` or legacy `goclaw auth use-context <profile>`
 - Override per-command: `goclaw --profile staging agents list`
+- Env override: `GOCLAW_PROFILE=staging goclaw traces list --since=1h`
 
 ### Automation Mode
 - Flags: `--yes` (skip prompts), `--output json` (machine output), `--verbose` (debug)
