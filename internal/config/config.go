@@ -95,22 +95,22 @@ func Load(cmd *cobra.Command) (*Config, error) {
 	}
 
 	// 3. Overlay flags (only if explicitly set)
-	if cmd.Flags().Changed("server") {
-		cfg.Server, _ = cmd.Flags().GetString("server")
+	if changed, value := rootOrLocalStringFlag(cmd, "server"); changed {
+		cfg.Server = value
 	}
-	if cmd.Flags().Changed("token") {
-		cfg.Token, _ = cmd.Flags().GetString("token")
+	if changed, value := rootOrLocalStringFlag(cmd, "token"); changed {
+		cfg.Token = value
 	}
-	if cmd.Flags().Changed("output") {
-		cfg.OutputFormat, _ = cmd.Flags().GetString("output")
+	if changed, value := rootOrLocalStringFlag(cmd, "output"); changed {
+		cfg.OutputFormat = value
 	}
-	if cmd.Flags().Changed("insecure") {
-		cfg.Insecure, _ = cmd.Flags().GetBool("insecure")
+	if changed, value := rootOrLocalBoolFlag(cmd, "insecure"); changed {
+		cfg.Insecure = value
 	}
-	if cmd.Flags().Changed("verbose") {
-		cfg.Verbose, _ = cmd.Flags().GetBool("verbose")
+	if changed, value := rootOrLocalBoolFlag(cmd, "verbose"); changed {
+		cfg.Verbose = value
 	}
-	cfg.Yes, _ = cmd.Flags().GetBool("yes")
+	_, cfg.Yes = rootOrLocalBoolFlag(cmd, "yes")
 
 	// Tenant ID: env then flag override
 	if v := os.Getenv("GOCLAW_TENANT_ID"); v != "" {
@@ -121,6 +121,25 @@ func Load(cmd *cobra.Command) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func rootOrLocalStringFlag(cmd *cobra.Command, name string) (bool, string) {
+	if cmd != nil && cmd.Root() != nil {
+		if flag := cmd.Root().PersistentFlags().Lookup(name); flag != nil {
+			return flag.Changed, flag.Value.String()
+		}
+	}
+	if cmd != nil {
+		if flag := cmd.Flags().Lookup(name); flag != nil {
+			return flag.Changed, flag.Value.String()
+		}
+	}
+	return false, ""
+}
+
+func rootOrLocalBoolFlag(cmd *cobra.Command, name string) (bool, bool) {
+	changed, raw := rootOrLocalStringFlag(cmd, name)
+	return changed, raw == "true"
 }
 
 func loadFile() (*FileConfig, error) {

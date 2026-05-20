@@ -54,7 +54,7 @@ echo "Analyze this log" | goclaw chat myagent
 |---------|-------------|
 | `auth` | Login, logout, device pairing, profile management |
 | `profile` | List, create, switch, inspect, and delete CLI profiles |
-| `agents` | CRUD, shares, delegation links, per-user instances |
+| `agents` | CRUD, shares, delegation links, per-user instances, evolution |
 | `chat` | Interactive or single-shot messaging with streaming |
 | `sessions` | List, preview, delete, reset, label, compact |
 | `codex-pool` | Unified Codex pool activity lookup for agents/providers |
@@ -63,7 +63,7 @@ echo "Analyze this log" | goclaw chat myagent
 | `providers` | LLM provider CRUD, model listing, verification |
 | `tools` | Custom + built-in tool management, invocation |
 | `cron` | Scheduled jobs CRUD, trigger, run history |
-| `teams` | Team management, task board, workspace |
+| `teams` | Team management, task board, workspace, attachments |
 | `channels` | Channel instances, contacts, pending messages |
 | `traces` | LLM trace viewer, filters, export |
 | `memory` | Memory documents, semantic search |
@@ -324,6 +324,12 @@ goclaw chat sessions resume myagent --session=sess-123 -m "Continue" --no-stream
 
 # Invoke a custom tool with JSON args from file
 goclaw tools invoke weather --args=@payload.json
+
+# Download a team task attachment to an explicit file
+goclaw teams attachments download team-123 attachment-456 --output ./artifact.bin
+
+# Approve a skill_add evolution suggestion, optionally overriding the draft
+goclaw agents evolution skill apply agent-123 suggestion-456 --skill-draft @./SKILL.md
 ```
 
 ## API Docs

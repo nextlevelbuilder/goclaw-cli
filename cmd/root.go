@@ -31,8 +31,8 @@ var rootCmd = &cobra.Command{
 		// but re-resolve here so TTY fallback kicks in when neither flag nor env
 		// is set while preserving a profile-level output default.
 		flagVal := ""
-		if cmd.Flags().Changed("output") {
-			flagVal, _ = cmd.Flags().GetString("output")
+		if flag := cmd.Root().PersistentFlags().Lookup("output"); flag != nil && flag.Changed {
+			flagVal = flag.Value.String()
 		}
 		cfg.OutputFormat = output.ResolveFormatWithDefault(flagVal, cfg.ProfileOutputFormat)
 

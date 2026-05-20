@@ -144,7 +144,7 @@ func init() {
 	teamsCmd.AddCommand(
 		teamsListCmd, teamsGetCmd, teamsCreateCmd, teamsUpdateCmd, teamsDeleteCmd,
 		teamsMembersCmd, teamsTasksCmd, teamsWorkspaceCmd,
-		teamsEventsCmd, teamsScopesCmd,
+		teamsEventsCmd, teamsScopesCmd, teamsAttachmentsCmd,
 	)
 	rootCmd.AddCommand(teamsCmd)
 }

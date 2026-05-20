@@ -5,7 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — Domain Coverage Expansion (P0–P4)
+## [Unreleased] — Domain Coverage Expansion (P0–P5)
 
 ### Added
 
@@ -41,9 +41,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `goclaw chat replay <agent> --session=<key>` and `goclaw chat sessions resume <agent> --session=<key>` — discoverability wrappers over existing chat session contracts.
 - `goclaw tools invoke <name> --args=<json|@file>` — alias for `--params` with file-backed JSON support.
 
+**P5 — Residual command fillers**
+- `goclaw teams attachments download <team-id> <attachment-id> --output <file>` — authenticated attachment download with required output path and no-overwrite default.
+- `goclaw agents evolution skill apply <agent-id> <suggestion-id> [--skill-draft @file]` — explicit wrapper for approving `skill_add` suggestions through the server evolution approval route.
+- `goclaw agents evolution update` now maps `--action=accept|reject` to the server-compatible `status=approved|rejected` payload.
+
 ### Notes
 - All new commands honor the AI-first ergonomics contract: `--output=json` envelope, central error handler, `--yes` for destructive ops, `--quiet` for CI.
-- P4/P5 backlog was re-swept against the current CLI surface; already-covered items were removed from residual scope before the next implementation pass.
+- P4/P5 backlog was re-swept against the current CLI surface; already-covered items were removed from residual scope before implementation.
 - Out of scope: OpenAI-compatible `/chat/completions` and `/v1/responses` endpoints (client APIs, not admin CLI surface).
 
 ---

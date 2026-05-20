@@ -1,7 +1,7 @@
 # GoClaw CLI - Codebase Summary
 
-**Generated from:** `repomix-output.xml` (2026-04-15), updated manually 2026-05-19
-**Phase Status:** P0-P4 Complete (AI-First Expansion); Super Admin API Parity Complete; Domain Coverage P4 Complete
+**Generated from:** `repomix-output.xml` (2026-04-15), updated manually 2026-05-20
+**Phase Status:** P0-P4 Complete (AI-First Expansion); Super Admin API Parity Complete; Domain Coverage P5 Implemented
 **Total Files:** 80+
 **Estimated Tokens:** 80,000+
 **Total Size:** 220+ KB
@@ -10,7 +10,7 @@
 
 ## Overview
 
-GoClaw CLI is a production-ready Go application providing comprehensive command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30+ command groups across modular command files with dual modes: interactive (human) and automation (CI/agent). Phases 0-4 (AI-first expansion) add AI ergonomics, admin/ops, migration, vault, and advanced agent/team/memory support. The 2026-05-18 super-admin parity work adds gateway upgrade, package updates, workstations, webhooks, MCP user credentials, secure env reveal, media/TTS/storage/channel fillers, and focused route-contract tests. The 2026-05-19 P3/P4 filler pass adds first-class profile commands, `GOCLAW_PROFILE`, `sessions compact`, WS health, trace filter polish, `codex-pool`, `api-keys rotate`, `config defaults`, chat session convenience wrappers, and `tools invoke --args`.
+GoClaw CLI is a production-ready Go application providing comprehensive command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30+ command groups across modular command files with dual modes: interactive (human) and automation (CI/agent). Phases 0-4 (AI-first expansion) add AI ergonomics, admin/ops, migration, vault, and advanced agent/team/memory support. The 2026-05-18 super-admin parity work adds gateway upgrade, package updates, workstations, webhooks, MCP user credentials, secure env reveal, media/TTS/storage/channel fillers, and focused route-contract tests. The 2026-05-19 P3/P4 filler pass adds first-class profile commands, `GOCLAW_PROFILE`, `sessions compact`, WS health, trace filter polish, `codex-pool`, `api-keys rotate`, `config defaults`, chat session convenience wrappers, and `tools invoke --args`. The 2026-05-20 P5 filler pass adds team attachment download, skill-specific evolution suggestion apply, and fixes evolution update payload compatibility.
 
 **Key Metrics:**
 - **70+ command files** in `cmd/` (modularized for maintainability)
@@ -281,7 +281,7 @@ goclaw (root)
 │   ├── files (list, get, set)            # global AGENTS.md, SOUL.md, IDENTITY.md, ...
 │   ├── instances (list, get-file, set-file, metadata, update-metadata)
 │   ├── episodic (list, search)
-│   ├── evolution (metrics, suggestions, update)
+│   ├── evolution (metrics, suggestions, update, skill apply)
 │   ├── orchestration / codex-pool-activity
 │   ├── skills list                       # skills granted to agent
 │   ├── v3-flags (get, toggle)
@@ -313,7 +313,8 @@ goclaw (root)
 ├── tools (list, invoke, delete)
 ├── cron (list, create, update, delete, trigger, history)
 ├── teams (list, create, members, task-board, export, import [--apply])
-│   └── workspace (list, read, delete, upload, move)
+│   ├── workspace (list, read, delete, upload, move)
+│   └── attachments download <team-id> <attachment-id> --output <file>
 ├── channels (list, contacts, pending-messages)
 ├── traces (list, export)
 ├── memory (list, search, upsert)
@@ -628,7 +629,7 @@ goclaw vault
 | `agents_sharing.go` | `agents share/unshare/regenerate/resummon` | Agent sharing lifecycle |
 | `agents_instances.go` | `agents instances list/get-file/set-file/update-metadata/metadata` | Per-user instance management |
 | `agents_links.go` | `agents links list/create/update/delete` | Delegation link management |
-| `agents_evolution.go` | `agents evolution metrics/suggestions/update` | Evolution feedback loop |
+| `agents_evolution.go` | `agents evolution metrics/suggestions/update/skill apply` | Evolution feedback loop and skill suggestion approval |
 | `agents_episodic.go` | `agents episodic list/search` | Episodic memory (semantic search) |
 | `agents_v3_flags.go` | `agents v3-flags get/toggle` | Experimental feature flags |
 | `agents_misc.go` | `agents orchestration/codex-pool-activity` | Orchestration + pool status |
@@ -644,6 +645,7 @@ goclaw vault
 | `teams_tasks_review.go` | `teams tasks approve/reject/comment/comments` | Task review workflow |
 | `teams_tasks_advanced.go` | `teams tasks delete/delete-bulk/events/active` | Advanced task ops + follow stream |
 | `teams_workspace.go` | `teams workspace list/read/delete` | Team workspace files |
+| `teams_attachments.go` | `teams attachments download` | Authenticated team task attachment downloads |
 | `teams_events.go` | `teams events list [--follow]` | Team event stream |
 | `teams_scopes.go` | `teams scopes <teamID>` | Permission scopes |
 | `memory_kg.go` | `memory kg entities list/get/upsert/delete` | KG entity CRUD |
@@ -671,6 +673,7 @@ All `cmd/` files now ≤200 LoC (chat files are 214 lines — overage is entirel
 | File | Tests | Coverage |
 |------|-------|---------|
 | `agents_lifecycle_test.go` | 18 tests | wake, identity, wait (success+timeout+invalid), sync, preview, evolution, episodic, v3-flags, orchestration, codex, instances |
+| `p5_fillers_test.go` | 9 tests | team attachment download, output-format guard, evolution payload mapping, skill apply type guard and draft override |
 | `chat_extensions_test.go` | 11 tests | history (3), inject (5 inc. validation), session-status (2) |
 | `teams_tasks_test.go` | 16 tests | list, get, get-light, create, assign, delete (yes+declined), delete-bulk (ids+missing), events, active (success+missing), scopes, events-list |
 | `memory_kg_test.go` | 15 tests | entities (list/get/delete/delete-with-yes), traverse (from-required+success), stats, graph (full+compact), dedup (scan/list/merge/dismiss), chunks, index, index-all, documents-global |

@@ -3,7 +3,7 @@
 **Date:** 2026-05-03
 **Branch:** feat/ai-first-cli-expansion
 **Reference report:** `plans/reports/brainstorm-260503-1907-gap-analysis-round2.md`
-**Status:** P3/P4 complete — P5 next; P6 remains server-blocked.
+**Status:** P3/P4 complete — P5 implemented pending ship; P6 remains server-blocked.
 
 ## Summary
 
@@ -13,7 +13,7 @@ Sau R1 (P0–P5) + R2 expansion (P0–P2), CLI đạt ~95% server coverage. R2 r
 |---|---|---|---|---|
 | P3 | AI-critical fillers (multi-profile, sessions compact, health, traces filter polish) | ~250 | 🔥 | complete |
 | P4 | UX polish batch 1 residuals (codex-pool umbrella, api-keys rotate, config defaults, chat replay convenience, tools invoke `--args` alias) | ~250 | 🟡 | complete |
-| P5 | Fillers residuals after sweep (team attachments download, evolution skill apply) | ~150 | 🟡 | not-started |
+| P5 | Fillers residuals after sweep (team attachments download, evolution skill apply) | ~150 | 🟡 | implemented pending ship |
 | P6 | Deferred — blocked on server FRs (traces follow, logs aggregate, providers reconnect, …) | n/a | 🟢 | server-blocked |
 
 ## Phase Files
@@ -28,6 +28,7 @@ Sau R1 (P0–P5) + R2 expansion (P0–P2), CLI đạt ~95% server coverage. R2 r
 - Super-admin API parity is already merged; P4 should proceed from current `dev`.
 - P3 multi-profile is complete; P4 can build on stable profile/default output behavior.
 - P5 verify sweep completed 2026-05-19; most suspected gaps already exist under current command paths.
+- P5 detailed execution plan: `../260520-1050-domain-coverage-p5-fillers/plan.md`.
 - P6 = upstream goclaw issues, not CLI work.
 - P4 validation/red-team evidence: `reports/validation-red-team-260519-p4.md`; implementation validated with `go build ./...`, `go test ./...`, and `go vet ./...`.
 

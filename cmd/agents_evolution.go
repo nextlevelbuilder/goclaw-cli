@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/spf13/cobra"
 )
@@ -85,26 +87,104 @@ Example:
 		if err != nil {
 			return err
 		}
+		status := map[string]string{
+			"accept": "approved",
+			"reject": "rejected",
+		}[action]
 		_, err = c.Patch(
-			fmt.Sprintf("/v1/agents/%s/evolution/suggestions/%s", args[0], args[1]),
-			map[string]any{"action": action},
+			fmt.Sprintf(
+				"/v1/agents/%s/evolution/suggestions/%s",
+				url.PathEscape(args[0]),
+				url.PathEscape(args[1]),
+			),
+			map[string]any{"status": status},
 		)
 		if err != nil {
 			return err
 		}
-		printer.Success(fmt.Sprintf("Suggestion %s: %sd", args[1], action))
+		printer.Success(fmt.Sprintf("Suggestion %s %s", args[1], status))
 		return nil
 	},
+}
+
+var agentsEvolutionSkillCmd = &cobra.Command{
+	Use:   "skill",
+	Short: "Apply skill evolution suggestions",
+}
+
+var agentsEvolutionSkillApplyCmd = &cobra.Command{
+	Use:   "apply <id> <suggestionID>",
+	Short: "Approve a skill_add evolution suggestion",
+	Long: `Approve a skill_add evolution suggestion for an agent.
+
+PATCH /v1/agents/{id}/evolution/suggestions/{suggestionID}
+
+Example:
+  goclaw agents evolution skill apply agent-1 sugg-42
+  goclaw agents evolution skill apply agent-1 sugg-42 --skill-draft @./SKILL.md`,
+	Args: cobra.ExactArgs(2),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		body := map[string]any{"status": "approved"}
+		if cmd.Flags().Changed("skill-draft") {
+			draft, _ := cmd.Flags().GetString("skill-draft")
+			content, err := readContent(draft)
+			if err != nil {
+				return err
+			}
+			body["skill_draft"] = content
+		}
+		c, err := newHTTP()
+		if err != nil {
+			return err
+		}
+		if err := requireSkillAddSuggestion(c, args[0], args[1]); err != nil {
+			return err
+		}
+		data, err := c.Patch(
+			fmt.Sprintf(
+				"/v1/agents/%s/evolution/suggestions/%s",
+				url.PathEscape(args[0]),
+				url.PathEscape(args[1]),
+			),
+			body,
+		)
+		if err != nil {
+			return err
+		}
+		printer.Print(unmarshalMap(data))
+		return nil
+	},
+}
+
+func requireSkillAddSuggestion(c interface {
+	Get(path string) (json.RawMessage, error)
+}, agentID, suggestionID string) error {
+	data, err := c.Get("/v1/agents/" + url.PathEscape(agentID) + "/evolution/suggestions?status=pending&limit=500")
+	if err != nil {
+		return err
+	}
+	for _, suggestion := range unmarshalList(data) {
+		if str(suggestion, "id") == suggestionID {
+			if str(suggestion, "suggestion_type") != "skill_add" {
+				return fmt.Errorf("suggestion %s is %q, not skill_add", suggestionID, str(suggestion, "suggestion_type"))
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("suggestion %s not found in agent evolution suggestions", suggestionID)
 }
 
 func init() {
 	agentsEvolutionUpdateCmd.Flags().String("action", "", "Action: accept or reject")
 	_ = agentsEvolutionUpdateCmd.MarkFlagRequired("action")
+	agentsEvolutionSkillApplyCmd.Flags().String("skill-draft", "", "Skill draft content or @file")
+	agentsEvolutionSkillCmd.AddCommand(agentsEvolutionSkillApplyCmd)
 
 	agentsEvolutionCmd.AddCommand(
 		agentsEvolutionMetricsCmd,
 		agentsEvolutionSuggestionsCmd,
 		agentsEvolutionUpdateCmd,
+		agentsEvolutionSkillCmd,
 	)
 	agentsCmd.AddCommand(agentsEvolutionCmd)
 }
