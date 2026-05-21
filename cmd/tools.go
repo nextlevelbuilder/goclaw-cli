@@ -23,7 +23,7 @@ var toolsBuiltinListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		printer.Print(unmarshalNamedList(data, "tools"))
 		return nil
 	},
 }

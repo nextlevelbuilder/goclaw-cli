@@ -42,11 +42,11 @@ var agentsListCmd = &cobra.Command{
 			return err
 		}
 		if cfg.OutputFormat != "table" {
-			printer.Print(unmarshalList(data))
+			printer.Print(unmarshalNamedList(data, "agents"))
 			return nil
 		}
 		tbl := output.NewTable("ID", "KEY", "NAME", "PROVIDER", "MODEL", "STATUS", "TYPE")
-		for _, a := range unmarshalList(data) {
+		for _, a := range unmarshalNamedList(data, "agents") {
 			tbl.AddRow(str(a, "id"), str(a, "agent_key"), str(a, "display_name"),
 				str(a, "provider"), str(a, "model"), str(a, "status"), str(a, "agent_type"))
 		}

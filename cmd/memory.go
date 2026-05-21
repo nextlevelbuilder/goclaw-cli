@@ -24,9 +24,11 @@ var memoryListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		path := "/v1/memory/" + args[0]
+		path := "/v1/agents/" + url.PathEscape(args[0]) + "/memory/documents"
 		if v, _ := cmd.Flags().GetString("user"); v != "" {
-			path += "?user_id=" + v
+			q := url.Values{}
+			q.Set("user_id", v)
+			path += "?" + q.Encode()
 		}
 		data, err := c.Get(path)
 		if err != nil {
@@ -54,7 +56,7 @@ var memoryGetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/memory/" + url.PathEscape(args[0]) + "/" + url.PathEscape(args[1]))
+		data, err := c.Get(memoryDocumentPath(args[0], args[1]))
 		if err != nil {
 			return err
 		}
@@ -77,7 +79,7 @@ var memoryStoreCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Put("/v1/memory/"+url.PathEscape(args[0])+"/"+url.PathEscape(args[1]),
+		_, err = c.Put(memoryDocumentPath(args[0], args[1]),
 			map[string]any{"content": content})
 		if err != nil {
 			return err
@@ -99,7 +101,7 @@ var memoryDeleteCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		_, err = c.Delete("/v1/memory/" + url.PathEscape(args[0]) + "/" + url.PathEscape(args[1]))
+		_, err = c.Delete(memoryDocumentPath(args[0], args[1]))
 		if err != nil {
 			return err
 		}
@@ -120,13 +122,17 @@ var memorySearchCmd = &cobra.Command{
 		query, _ := cmd.Flags().GetString("query")
 		user, _ := cmd.Flags().GetString("user")
 		body := buildBody("query", query, "user_id", user)
-		data, err := c.Post("/v1/memory/"+args[0]+"/search", body)
+		data, err := c.Post("/v1/agents/"+url.PathEscape(args[0])+"/memory/search", body)
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		printer.Print(unmarshalMap(data))
 		return nil
 	},
+}
+
+func memoryDocumentPath(agentID, path string) string {
+	return "/v1/agents/" + url.PathEscape(agentID) + "/memory/documents/" + url.PathEscape(path)
 }
 
 func init() {

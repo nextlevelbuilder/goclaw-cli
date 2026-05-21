@@ -41,13 +41,14 @@ var sessionsListCmd = &cobra.Command{
 			return err
 		}
 		if cfg.OutputFormat != "table" {
-			printer.Print(unmarshalList(data))
+			printer.Print(unmarshalNamedList(data, "sessions"))
 			return nil
 		}
 		tbl := output.NewTable("KEY", "AGENT", "USER", "LABEL", "INPUT_TOKENS", "OUTPUT_TOKENS")
-		for _, s := range unmarshalList(data) {
-			tbl.AddRow(str(s, "session_key"), str(s, "agent_id"), str(s, "user_id"),
-				str(s, "label"), str(s, "input_tokens"), str(s, "output_tokens"))
+		for _, s := range unmarshalNamedList(data, "sessions") {
+			tbl.AddRow(strFirst(s, "session_key", "key"), strFirst(s, "agent_id", "agentID", "agentName"),
+				strFirst(s, "user_id", "userID"), str(s, "label"),
+				strFirst(s, "input_tokens", "inputTokens"), strFirst(s, "output_tokens", "outputTokens"))
 		}
 		printer.Print(tbl)
 		return nil

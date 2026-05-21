@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/spf13/cobra"
@@ -191,10 +192,17 @@ var usageTimeseriesCmd = &cobra.Command{
 			return err
 		}
 		q := url.Values{}
-		for _, k := range []string{"start", "end", "granularity", "agent", "user", "tenant"} {
-			if v, _ := cmd.Flags().GetString(k); v != "" {
-				q.Set(k, v)
-			}
+		if v, _ := cmd.Flags().GetString("start"); v != "" {
+			q.Set("from", normalizeUsageTimestamp(v))
+		}
+		if v, _ := cmd.Flags().GetString("end"); v != "" {
+			q.Set("to", normalizeUsageTimestamp(v))
+		}
+		if v, _ := cmd.Flags().GetString("granularity"); v != "" {
+			q.Set("group_by", v)
+		}
+		if v, _ := cmd.Flags().GetString("agent"); v != "" {
+			q.Set("agent_id", v)
 		}
 		path := "/v1/usage/timeseries"
 		if len(q) > 0 {
@@ -217,10 +225,14 @@ var usageBreakdownCmd = &cobra.Command{
 			return err
 		}
 		q := url.Values{}
-		for _, k := range []string{"by", "start", "end"} {
-			if v, _ := cmd.Flags().GetString(k); v != "" {
-				q.Set(k, v)
-			}
+		if v, _ := cmd.Flags().GetString("by"); v != "" {
+			q.Set("group_by", v)
+		}
+		if v, _ := cmd.Flags().GetString("start"); v != "" {
+			q.Set("from", normalizeUsageTimestamp(v))
+		}
+		if v, _ := cmd.Flags().GetString("end"); v != "" {
+			q.Set("to", normalizeUsageTimestamp(v))
 		}
 		path := "/v1/usage/breakdown"
 		if len(q) > 0 {
@@ -233,6 +245,13 @@ var usageBreakdownCmd = &cobra.Command{
 		printer.Print(unmarshalMap(data))
 		return nil
 	},
+}
+
+func normalizeUsageTimestamp(v string) string {
+	if t, err := time.Parse("2006-01-02", v); err == nil {
+		return t.Format(time.RFC3339)
+	}
+	return v
 }
 
 func init() {
@@ -250,15 +269,15 @@ func init() {
 	usageDetailCmd.Flags().String("from", "", "Start date")
 	usageDetailCmd.Flags().String("to", "", "End date")
 
-	usageTimeseriesCmd.Flags().String("start", "", "Start ISO timestamp")
-	usageTimeseriesCmd.Flags().String("end", "", "End ISO timestamp")
-	usageTimeseriesCmd.Flags().String("granularity", "day", "Bucket size: hour|day")
+	usageTimeseriesCmd.Flags().String("start", "", "Start date or RFC3339 timestamp")
+	usageTimeseriesCmd.Flags().String("end", "", "End date or RFC3339 timestamp")
+	usageTimeseriesCmd.Flags().String("granularity", "day", "Group by: provider|model|channel|agent|day")
 	usageTimeseriesCmd.Flags().String("agent", "", "Filter by agent")
 	usageTimeseriesCmd.Flags().String("user", "", "Filter by user")
 	usageTimeseriesCmd.Flags().String("tenant", "", "Filter by tenant")
-	usageBreakdownCmd.Flags().String("by", "agent", "Dimension: agent|user|tenant")
-	usageBreakdownCmd.Flags().String("start", "", "Start ISO timestamp")
-	usageBreakdownCmd.Flags().String("end", "", "End ISO timestamp")
+	usageBreakdownCmd.Flags().String("by", "agent", "Dimension: provider|model|channel|agent|day")
+	usageBreakdownCmd.Flags().String("start", "", "Start date or RFC3339 timestamp")
+	usageBreakdownCmd.Flags().String("end", "", "End date or RFC3339 timestamp")
 
 	tracesCmd.AddCommand(tracesListCmd, tracesGetCmd, tracesExportCmd)
 	usageCmd.AddCommand(usageSummaryCmd, usageDetailCmd, usageCostsCmd,

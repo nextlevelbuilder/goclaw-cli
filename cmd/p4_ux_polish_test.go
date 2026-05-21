@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -155,6 +156,10 @@ func TestConfigDefaultsUsesWSMethod(t *testing.T) {
 func TestToolsInvokeArgsReadsFile(t *testing.T) {
 	defer resetTestFlag(toolsInvokeCmd, "args", "")
 	defer resetTestFlag(toolsInvokeCmd, "param", "")
+	defer resetTestFlag(toolsInvokeCmd, "agent", "")
+	defer resetTestFlag(toolsInvokeCmd, "action", "")
+	defer resetTestFlag(toolsInvokeCmd, "session", "")
+	defer resetTestFlag(toolsInvokeCmd, "dry-run", "false")
 	var body map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/v1/tools/invoke" {
@@ -172,12 +177,192 @@ func TestToolsInvokeArgsReadsFile(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`{"city":"Saigon"}`), 0o600); err != nil {
 		t.Fatalf("write args: %v", err)
 	}
-	if err := runCmd(t, "tools", "invoke", "weather", "--args=@"+path, "--param=unit=c"); err != nil {
+	if err := runCmd(t, "tools", "invoke", "weather", "--args=@"+path, "--param=unit=c",
+		"--agent=goclaw", "--action=forecast", "--session=sess-1", "--dry-run"); err != nil {
 		t.Fatalf("tools invoke: %v", err)
 	}
-	params := body["parameters"].(map[string]any)
+	if body["tool"] != "weather" {
+		t.Fatalf("tool = %#v", body["tool"])
+	}
+	if body["agentId"] != "goclaw" || body["action"] != "forecast" ||
+		body["sessionKey"] != "sess-1" || body["dryRun"] != true {
+		t.Fatalf("context fields = %#v", body)
+	}
+	params := body["args"].(map[string]any)
 	if params["city"] != "Saigon" || params["unit"] != "c" {
 		t.Fatalf("params = %#v", params)
+	}
+}
+
+func TestToolsCustomUnsupportedDoesNotCallServer(t *testing.T) {
+	requests := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+	t.Setenv("GOCLAW_SERVER", srv.URL)
+	t.Setenv("GOCLAW_TOKEN", "test-token")
+
+	err := runCmd(t, "tools", "custom", "list")
+	if err == nil {
+		t.Fatal("expected unsupported custom tools error")
+	}
+	var detail *output.ErrorDetail
+	if !errors.As(err, &detail) || detail.Code != "INVALID_REQUEST" {
+		t.Fatalf("error = %#v, want INVALID_REQUEST detail", err)
+	}
+	if requests != 0 {
+		t.Fatalf("requests = %d, want 0", requests)
+	}
+}
+
+func TestUsageTimeseriesMapsFlagsToServerContract(t *testing.T) {
+	defer resetTestFlag(usageTimeseriesCmd, "start", "")
+	defer resetTestFlag(usageTimeseriesCmd, "end", "")
+	defer resetTestFlag(usageTimeseriesCmd, "granularity", "day")
+	defer resetTestFlag(usageTimeseriesCmd, "agent", "")
+	var query url.Values
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/usage/timeseries" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		query = r.URL.Query()
+		okJSON(t, w, map[string]any{"series": []map[string]any{}})
+	}))
+	defer srv.Close()
+	t.Setenv("GOCLAW_SERVER", srv.URL)
+	t.Setenv("GOCLAW_TOKEN", "test-token")
+
+	if err := runCmd(t, "usage", "timeseries", "--start=2026-05-20", "--end=2026-05-21", "--granularity=day", "--agent=agent-1"); err != nil {
+		t.Fatalf("usage timeseries: %v", err)
+	}
+	if query.Get("from") != "2026-05-20T00:00:00Z" || query.Get("to") != "2026-05-21T00:00:00Z" ||
+		query.Get("group_by") != "day" || query.Get("agent_id") != "agent-1" {
+		t.Fatalf("query = %#v", query)
+	}
+	if query.Has("start") || query.Has("end") || query.Has("granularity") || query.Has("agent") {
+		t.Fatalf("query contains legacy keys: %#v", query)
+	}
+}
+
+func TestUsageBreakdownMapsFlagsToServerContract(t *testing.T) {
+	defer resetTestFlag(usageBreakdownCmd, "start", "")
+	defer resetTestFlag(usageBreakdownCmd, "end", "")
+	defer resetTestFlag(usageBreakdownCmd, "by", "agent")
+	var query url.Values
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/usage/breakdown" {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		query = r.URL.Query()
+		okJSON(t, w, map[string]any{"groups": []map[string]any{}})
+	}))
+	defer srv.Close()
+	t.Setenv("GOCLAW_SERVER", srv.URL)
+	t.Setenv("GOCLAW_TOKEN", "test-token")
+
+	if err := runCmd(t, "usage", "breakdown", "--start=2026-05-20", "--end=2026-05-21", "--by=provider"); err != nil {
+		t.Fatalf("usage breakdown: %v", err)
+	}
+	if query.Get("from") != "2026-05-20T00:00:00Z" || query.Get("to") != "2026-05-21T00:00:00Z" ||
+		query.Get("group_by") != "provider" {
+		t.Fatalf("query = %#v", query)
+	}
+	if query.Has("start") || query.Has("end") || query.Has("by") {
+		t.Fatalf("query contains legacy keys: %#v", query)
+	}
+}
+
+func TestMemoryCommandsUseAgentScopedHTTPRoutes(t *testing.T) {
+	defer resetTestFlag(memoryListCmd, "user", "")
+	defer resetTestFlag(memorySearchCmd, "query", "")
+	defer resetTestFlag(memorySearchCmd, "user", "")
+	var paths []string
+	var searchBody map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.String())
+		switch r.URL.Path {
+		case "/v1/agents/goclaw/memory/documents":
+			okJSON(t, w, []map[string]any{{"path": "notes.md"}})
+		case "/v1/agents/goclaw/memory/search":
+			_ = json.NewDecoder(r.Body).Decode(&searchBody)
+			okJSON(t, w, map[string]any{"results": []map[string]any{}, "count": 0})
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+	t.Setenv("GOCLAW_SERVER", srv.URL)
+	t.Setenv("GOCLAW_TOKEN", "test-token")
+
+	if err := runCmd(t, "memory", "list", "goclaw", "--user=system"); err != nil {
+		t.Fatalf("memory list: %v", err)
+	}
+	if err := runCmd(t, "memory", "search", "goclaw", "--query=test"); err != nil {
+		t.Fatalf("memory search: %v", err)
+	}
+	if len(paths) != 2 || paths[0] != "/v1/agents/goclaw/memory/documents?user_id=system" ||
+		paths[1] != "/v1/agents/goclaw/memory/search" {
+		t.Fatalf("paths = %#v", paths)
+	}
+	if searchBody["query"] != "test" {
+		t.Fatalf("search body = %#v", searchBody)
+	}
+}
+
+func TestListCommandsAcceptObjectWrappedLists(t *testing.T) {
+	var paths []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		switch r.URL.Path {
+		case "/v1/agents":
+			okJSON(t, w, map[string]any{"agents": []map[string]any{{"id": "agent-1"}}})
+		case "/v1/sessions":
+			okJSON(t, w, map[string]any{"sessions": []map[string]any{{"session_key": "sess-1"}}})
+		case "/v1/tools/builtin":
+			okJSON(t, w, map[string]any{"tools": []map[string]any{{"name": "sessions_list"}}})
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer srv.Close()
+	t.Setenv("GOCLAW_SERVER", srv.URL)
+	t.Setenv("GOCLAW_TOKEN", "test-token")
+	t.Setenv("GOCLAW_OUTPUT", "json")
+
+	agentsOut, err := captureStdout(t, func() error {
+		return runCmd(t, "agents", "list")
+	})
+	if err != nil {
+		t.Fatalf("agents list: %v", err)
+	}
+	sessionsOut, err := captureStdout(t, func() error {
+		return runCmd(t, "sessions", "list")
+	})
+	if err != nil {
+		t.Fatalf("sessions list: %v", err)
+	}
+	toolsOut, err := captureStdout(t, func() error {
+		return runCmd(t, "tools", "builtin", "list")
+	})
+	if err != nil {
+		t.Fatalf("tools builtin list: %v", err)
+	}
+	if strings.Contains(agentsOut, "null") || !strings.Contains(agentsOut, "agent-1") {
+		t.Fatalf("agents stdout = %q", agentsOut)
+	}
+	if strings.Contains(sessionsOut, "null") || !strings.Contains(sessionsOut, "sess-1") {
+		t.Fatalf("sessions stdout = %q", sessionsOut)
+	}
+	if strings.Contains(toolsOut, "null") || !strings.Contains(toolsOut, "sessions_list") {
+		t.Fatalf("tools stdout = %q", toolsOut)
+	}
+	if len(paths) != 3 || paths[0] != "/v1/agents" || paths[1] != "/v1/sessions" ||
+		paths[2] != "/v1/tools/builtin" {
+		t.Fatalf("paths = %#v", paths)
 	}
 }
 

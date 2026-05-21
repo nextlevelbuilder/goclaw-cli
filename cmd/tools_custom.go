@@ -1,12 +1,7 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/url"
-
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
-	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
 
@@ -18,126 +13,35 @@ var toolsCustomCmd = &cobra.Command{Use: "custom", Short: "Manage custom tools"}
 var toolsCustomListCmd = &cobra.Command{
 	Use: "list", Short: "List custom tools",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		path := "/v1/tools/custom"
-		if v, _ := cmd.Flags().GetString("agent"); v != "" {
-			path += "?agent_id=" + url.QueryEscape(v)
-		}
-		data, err := c.Get(path)
-		if err != nil {
-			return err
-		}
-		if cfg.OutputFormat != "table" {
-			printer.Print(unmarshalList(data))
-			return nil
-		}
-		tbl := output.NewTable("ID", "NAME", "DESCRIPTION", "ENABLED", "TIMEOUT")
-		for _, t := range unmarshalList(data) {
-			tbl.AddRow(str(t, "id"), str(t, "name"), str(t, "description"),
-				str(t, "enabled"), str(t, "timeout_seconds"))
-		}
-		printer.Print(tbl)
-		return nil
+		return customToolsUnsupported()
 	},
 }
 
 var toolsCustomGetCmd = &cobra.Command{
 	Use: "get <id>", Short: "Get custom tool details", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		data, err := c.Get("/v1/tools/custom/" + args[0])
-		if err != nil {
-			return err
-		}
-		printer.Print(unmarshalMap(data))
-		return nil
+		return customToolsUnsupported()
 	},
 }
 
 var toolsCustomCreateCmd = &cobra.Command{
 	Use: "create", Short: "Create a custom tool",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		name, _ := cmd.Flags().GetString("name")
-		desc, _ := cmd.Flags().GetString("description")
-		command, _ := cmd.Flags().GetString("command")
-		timeout, _ := cmd.Flags().GetInt("timeout")
-		agent, _ := cmd.Flags().GetString("agent")
-		paramsJSON, _ := cmd.Flags().GetString("parameters")
-		body := buildBody("name", name, "description", desc,
-			"command", command, "timeout_seconds", timeout, "agent_id", agent, "enabled", true)
-		if paramsJSON != "" {
-			var params any
-			if err := json.Unmarshal([]byte(paramsJSON), &params); err != nil {
-				return fmt.Errorf("invalid parameters JSON: %w", err)
-			}
-			body["parameters"] = params
-		}
-		data, err := c.Post("/v1/tools/custom", body)
-		if err != nil {
-			return err
-		}
-		printer.Success(fmt.Sprintf("Tool created: %s", str(unmarshalMap(data), "id")))
-		return nil
+		return customToolsUnsupported()
 	},
 }
 
 var toolsCustomUpdateCmd = &cobra.Command{
 	Use: "update <id>", Short: "Update custom tool", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		body := make(map[string]any)
-		for _, f := range []string{"name", "description", "command"} {
-			if cmd.Flags().Changed(f) {
-				v, _ := cmd.Flags().GetString(f)
-				body[f] = v
-			}
-		}
-		if cmd.Flags().Changed("timeout") {
-			v, _ := cmd.Flags().GetInt("timeout")
-			body["timeout_seconds"] = v
-		}
-		if cmd.Flags().Changed("enabled") {
-			v, _ := cmd.Flags().GetBool("enabled")
-			body["enabled"] = v
-		}
-		_, err = c.Put("/v1/tools/custom/"+args[0], body)
-		if err != nil {
-			return err
-		}
-		printer.Success("Tool updated")
-		return nil
+		return customToolsUnsupported()
 	},
 }
 
 var toolsCustomDeleteCmd = &cobra.Command{
 	Use: "delete <id>", Short: "Delete custom tool", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if !tui.Confirm("Delete this tool?", cfg.Yes) {
-			return nil
-		}
-		c, err := newHTTP()
-		if err != nil {
-			return err
-		}
-		_, err = c.Delete("/v1/tools/custom/" + args[0])
-		if err != nil {
-			return err
-		}
-		printer.Success("Tool deleted")
-		return nil
+		return customToolsUnsupported()
 	},
 }
 
@@ -156,7 +60,18 @@ var toolsInvokeCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		body := map[string]any{"name": args[0], "parameters": params}
+		agentID, _ := cmd.Flags().GetString("agent")
+		action, _ := cmd.Flags().GetString("action")
+		sessionKey, _ := cmd.Flags().GetString("session")
+		dryRun, _ := cmd.Flags().GetBool("dry-run")
+		body := buildBody(
+			"tool", args[0],
+			"args", params,
+			"agentId", agentID,
+			"action", action,
+			"sessionKey", sessionKey,
+			"dryRun", dryRun,
+		)
 		data, err := c.Post("/v1/tools/invoke", body)
 		if err != nil {
 			return err
@@ -164,6 +79,13 @@ var toolsInvokeCmd = &cobra.Command{
 		printer.Print(unmarshalMap(data))
 		return nil
 	},
+}
+
+func customToolsUnsupported() error {
+	return &output.ErrorDetail{
+		Code:    "INVALID_REQUEST",
+		Message: "custom tool management is not supported by this GoClaw server; use `tools builtin` or `tools invoke`",
+	}
 }
 
 func init() {
@@ -180,6 +102,10 @@ func init() {
 	toolsInvokeCmd.Flags().StringSlice("param", nil, "Parameter key=value pairs")
 	toolsInvokeCmd.Flags().String("params", "", "Parameters as JSON object")
 	toolsInvokeCmd.Flags().String("args", "", "Alias for --params; accepts literal JSON or @filepath")
+	toolsInvokeCmd.Flags().String("agent", "", "Agent key or ID for tool context")
+	toolsInvokeCmd.Flags().String("action", "", "Optional action to pass to the tool")
+	toolsInvokeCmd.Flags().String("session", "", "Optional session key for tool context")
+	toolsInvokeCmd.Flags().Bool("dry-run", false, "Validate tool and return schema without executing it")
 
 	toolsCustomCmd.AddCommand(toolsCustomListCmd, toolsCustomGetCmd, toolsCustomCreateCmd,
 		toolsCustomUpdateCmd, toolsCustomDeleteCmd)
