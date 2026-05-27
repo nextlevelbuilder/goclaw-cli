@@ -22,10 +22,12 @@ goclaw sessions branch <session-key> --up-to-index <n> [--new-session-key <key>]
 ```
 
 - Endpoint: `POST /v1/chat/sessions/{key}/branch`
-- Required: `<session-key>` positional, `--up-to-index` (int, >= 0).
+- **Backend path note (Red Team F3):** the new `branch`/`follow` commands sit under top-level `sessionsCmd` for UX continuity, but target `/v1/chat/sessions/...` (matches the domain of `cmd/chat_sessions.go`), while sibling `sessions list/preview/delete/reset/label/compact` target `/v1/sessions/...`. Long-help for both new commands MUST state: `Backend route: POST /v1/chat/sessions/{key}/branch (chat domain).` This is the documented exception, not a bug.
+- Required: `<session-key>` positional, `--up-to-index` (int, >= 0 — **including zero**).
 - Optional: `--new-session-key`, `--label`, `--metadata key=value` (repeatable).
 - `--metadata` parses repeated `key=value`; reject malformed entries before HTTP call.
-- Path-escape source session key (may contain `:` and `/`).
+- Path-escape source session key via `url.PathEscape` (may contain `:` and `/`).
+- **buildBody-zero workaround (Red Team F2):** the shared `buildBody` helper at `cmd/helpers.go:86-89` drops `int v == 0`. For `up_to_index`, DO NOT use `buildBody`; construct the body map directly so `{"up_to_index": 0, ...}` is preserved on the wire.
 - Request body:
   ```json
   {"new_session_key":"...","up_to_index":12,"label":"...","metadata":{"source":"cli"}}
@@ -43,8 +45,9 @@ goclaw sessions follow <session-key> [--cursor <n>] [--limit <n>] [-o json|yaml|
 ```
 
 - Endpoint: `GET /v1/chat/sessions/{key}/history/follow`
-- Query: `cursor` (default 0, >= 0), `limit` (default 50, > 0, server max 200).
-- **One polling request only. No SSE/WS watch.**
+- Query: `cursor` (default 0, >= 0 — **including zero**), `limit` (default 50, > 0, server max 200).
+- **buildBody-zero workaround (Red Team F2):** build the query string directly with `url.Values`; do NOT use `buildBody` (which would drop `cursor=0` per the int-zero skip rule). `cursor=0` MUST appear in the query string when `--cursor 0` is passed.
+- **One polling request only. No SSE/WS watch.** Direct `httpClient.Get` call — must NOT use `client.FollowStream` (`internal/client/follow.go`), which reconnects on EOF.
 - Response:
   ```json
   {"session_key":"...","cursor":12,"next_cursor":18,"total":18,"messages":[],"reset":false,"updated":"..."}
@@ -72,6 +75,7 @@ goclaw sessions follow <session-key> [--cursor <n>] [--limit <n>] [-o json|yaml|
 
 - `--up-to-index` missing returns validation error before HTTP call.
 - Negative `--up-to-index` returns validation error before HTTP call.
+- **Zero-boundary test (Red Team F2):** `--up-to-index 0` produces request body containing `"up_to_index":0` literally (not omitted, not missing). Use `json.Unmarshal` on the captured request body and assert the key is present with value `0`.
 - Request body shape exact: `up_to_index` as int, `metadata` as object.
 - `--metadata foo=bar --metadata baz=qux` produces `{"foo":"bar","baz":"qux"}`.
 - Malformed `--metadata foobar` (no `=`) rejected before HTTP call.
@@ -82,12 +86,13 @@ goclaw sessions follow <session-key> [--cursor <n>] [--limit <n>] [-o json|yaml|
 ### `cmd/sessions_follow_test.go`
 
 - Default cursor=0, limit=50 appear in query string.
+- **Zero-boundary test (Red Team F2):** `--cursor 0` results in `cursor=0` appearing in raw query string (not omitted by buildBody int-zero skip).
 - Custom cursor and limit appear in query string.
 - Negative `--cursor` rejected before HTTP call.
 - Non-positive `--limit` rejected before HTTP call.
 - Session key path-escaped.
 - JSON output preserves `reset`, `next_cursor`, `messages`.
-- Only one HTTP request is issued (no implicit loop).
+- **Atomic-counter test (Red Team F7):** wrap test server handler with `atomic.AddInt64(&calls, 1)`; assert `calls == 1` after `RunE`. Assert command does NOT import / call `client.FollowStream`.
 
 ## Todo List
 

@@ -42,8 +42,8 @@ goclaw providers reconnect <provider-id> [-o json|yaml|table]
 
 - Endpoint: `POST /v1/providers/{id}/reconnect`
 - Admin-only on backend; client sends no body. Do NOT send `{"verify":true}`.
-- Do NOT add `--verify` flag; users call `goclaw providers verify <id>` separately if needed.
-- Path-escape `<provider-id>` via existing helper.
+- Do NOT add `--verify` flag. **The only verify-shaped command is `goclaw providers verify-embedding <id>` (`cmd/providers_verify.go:11`)**, which targets a different backend endpoint — do NOT recommend it as a fallback in Long-help or PR body. Backend handles reconnect verification server-side.
+- Path-escape `<provider-id>` via `url.PathEscape` (see escaped-path pattern in `cmd/api_keys_rotate.go`).
 - Response:
   ```json
   {"status":"reconnected","provider":{},"registry_updated":true,"cache_invalidated":true}
@@ -77,6 +77,8 @@ goclaw providers reconnect <provider-id> [-o json|yaml|table]
 - Non-RFC3339 `--since` returns validation error before HTTP call.
 - JSON output preserves `next_since` and `spans_by_trace_id`.
 - Table output includes the seven required columns.
+- **Atomic-counter test (Red Team F7):** wrap `httptest.NewServer` handler with `atomic.AddInt64(&calls, 1)`; assert `calls == 1` after `RunE`. Must NOT use `client.FollowStream` (`internal/client/follow.go`) — that would reconnect.
+- **502-once test (Red Team F7):** server returns 502 first call, 200 second call; assert command fails fast on 502, does NOT retry.
 
 ### `cmd/providers_reconnect_test.go`
 
@@ -85,6 +87,7 @@ goclaw providers reconnect <provider-id> [-o json|yaml|table]
 - JSON output preserves `registry_updated` and `cache_invalidated`.
 - Table output renders status + boolean columns.
 - Provider ID with `/` or `:` is path-escaped (regression test for RT-02).
+- **Atomic-counter test (Red Team F7):** assert exactly one POST request issued. No retry/reconnect path.
 
 ## Todo List
 

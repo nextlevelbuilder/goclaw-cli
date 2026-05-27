@@ -3,7 +3,7 @@ phase: 7
 title: "Ship Readiness"
 status: pending
 priority: P2
-effort: "1h"
+effort: "15m"
 dependencies: [6]
 ---
 
@@ -11,60 +11,58 @@ dependencies: [6]
 
 ## Overview
 
-PR hygiene and ship. Single PR from `feat/p6-backend-unblocked-cli` → `dev`. No direct push to `dev` or `main`.
+Single-step phase. Delegate the entire ship pipeline to the `/ck:ship` skill once phases 1–6 are green. This phase contributes the backend-evidence block and the PR body content; everything else (status check, secret scan, commit, push, PR creation, review wait, merge) is owned by `/ck:ship`.
 
-## Requirements
+**Red Team F15 resolution:** the prior 9-step checklist duplicated `/ck:ship`. "Watch beta release publish" was open-ended async waiting unsuitable as a phase gate. Both removed. Manual `CHANGELOG.md` edits removed — `semantic-release` is commit-driven (see `.github/workflows/release.yaml`).
 
-- Branch is `feat/p6-backend-unblocked-cli`, off `dev` tip.
-- Working tree clean.
-- All phase 1–6 validation gates green.
-- No unrelated files staged.
+## Single Step
 
-## Implementation Steps
+Invoke:
 
-1. `git status --short --branch` clean.
-2. Secret scan staged diff.
-3. Commit with conventional message:
-   - `feat(cli): add P6 backend-unblocked CLI surfaces`
-   - Body lists the 7 surfaces, references issue [#16](https://github.com/nextlevelbuilder/goclaw-cli/issues/16), backend PRs #37 / #44, and beta tag `v3.12.0-beta.20`+.
-4. Push branch: `git push -u origin feat/p6-backend-unblocked-cli`.
-5. Open PR to `dev` via `gh pr create --base dev --head feat/p6-backend-unblocked-cli`.
-6. PR body must include:
-   - The 7 command surfaces with example invocations.
-   - Backend evidence: PR #37 (commit `56e227c4030e85163cd882b29ab472f8ce3e1a27`), PR #44 (commit `43049d3b3fbb5f457477118252d1f21fdc0480de`).
-   - Beta tag note: `v3.12.0-beta.20` is the earliest tag containing PR #44; latest is `v3.12.0-beta.35` (2026-05-27).
-   - Explicit out-of-scope list (verbatim from issue #16).
-   - Validation results.
-7. Run review and fix findings before merge.
-8. After merge to `dev`, watch CI + Release until beta release publishes.
+```
+/ck:ship official
+```
+
+Provide this PR-body block when prompted (or paste into the gh-generated body):
+
+```markdown
+## Backend evidence
+
+- PR #37 (digitopvn/goclaw) — commit `56e227c4030e85163cd882b29ab472f8ce3e1a27` — surfaces `traces/follow` and `providers/{id}/reconnect`.
+- PR #44 (digitopvn/goclaw) — commit `43049d3b3fbb5f457477118252d1f21fdc0480de` — surfaces `chat/sessions/{key}/branch`, `chat/sessions/{key}/history/follow`, `channels/instances/{id}/writers/test`, `activity/aggregate`, `logs/runtime/aggregate`.
+- Beta tag: `v3.12.0-beta.20` is the earliest tag containing PR #44 (verified via `gh api repos/digitopvn/goclaw/compare/v3.12.0-beta.20...43049d3b` → `identical`). Latest beta as of 2026-05-27: `v3.12.0-beta.35`.
+
+## Out of scope (verbatim from issue #16)
+
+- POST /v1/traces/{id}/replay
+- generic GET /v1/logs/aggregate
+- WebSocket chat.history.delta
+- SSE chat history follow
+- long-running watch loops for traces follow or sessions follow
+```
+
+Conventional-commit subject for `/ck:ship` to use:
+
+```
+feat(cli): add P6 backend-unblocked CLI surfaces (issue #16)
+```
 
 ## Todo List
 
-- [ ] Working tree clean.
-- [ ] Conventional commit composed.
-- [ ] Branch pushed.
-- [ ] PR opened against `dev`.
-- [ ] PR body includes backend evidence and out-of-scope list.
-- [ ] Review findings addressed.
-- [ ] PR merged.
-- [ ] Beta release confirmed.
-- [ ] Phase status flipped to Complete.
+- [ ] `/ck:ship official` invoked with backend-evidence block.
+- [ ] PR opened against `dev` with backend-evidence + out-of-scope sections.
+- [ ] Phase status flipped to Complete once PR is open (not waiting for merge — `/ck:ship` owns merge cadence).
 
 ## Success Criteria
 
-- One PR, merged to `dev`.
-- Beta release contains the new commands.
-- Issue #16 closed with link to merged PR.
-
-## Risks
-
-- `claude-review` workflow may flag advisory issues; address before merge.
-- semantic-release may need a `feat:` commit to trigger a beta bump; verify the conventional message header.
+- One PR open against `dev` with the conventional `feat:` subject and the backend-evidence + out-of-scope blocks in the body.
 
 ## Out of Scope
 
-- Promoting `dev` to `main` (separate ship cycle, like the one that produced PR #18 today).
+- Promoting `dev` to `main` (separate ship cycle, like the one that produced PR #18 on 2026-05-27).
+- Manual `CHANGELOG.md` edits (semantic-release commit-driven).
+- Watching beta release publish (out of phase 7 scope — beta confirmation happens whenever it happens).
 
 ## Next Steps
 
-Close issue #16 with merge reference. Consider a follow-up P7 plan if backend introduces additional FRs.
+Close issue #16 with merge reference after `/ck:ship` reports PR merged.

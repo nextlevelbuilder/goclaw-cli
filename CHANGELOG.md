@@ -5,7 +5,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
-## [Unreleased] — Domain Coverage Expansion (P0–P5)
+## [Unreleased] — Domain Coverage Expansion (P0–P6)
 
 ### Added
 
@@ -45,6 +45,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `goclaw teams attachments download <team-id> <attachment-id> --output <file>` — authenticated attachment download with required output path and no-overwrite default.
 - `goclaw agents evolution skill apply <agent-id> <suggestion-id> [--skill-draft @file]` — explicit wrapper for approving `skill_add` suggestions through the server evolution approval route.
 - `goclaw agents evolution update` now maps `--action=accept|reject` to the server-compatible `status=approved|rejected` payload.
+
+**P6 — Backend-unblocked surfaces (gateway `v3.12.0-beta.20`+)**
+- `goclaw traces follow --session-key|--agent [--since RFC3339] [--limit N]` — one-shot incremental trace polling (`GET /v1/traces/follow`). Re-invoke with returned cursor to advance; no WS stream, no watch loop.
+- `goclaw providers reconnect <provider-id>` — hot-reconnect a provider, bumping the registry without touching credentials (`POST /v1/providers/{id}/reconnect`).
+- `goclaw sessions branch <session-key> --up-to-index N [--new-session-key K] [--label L] [--metadata k=v ...]` — branch a chat session at a 1-based message index into a new session (`POST /v1/chat/sessions/{key}/branch`). `--up-to-index=0` is preserved on the wire.
+- `goclaw sessions follow <session-key> [--cursor N] [--limit N]` — one-shot cursor-based history poll (`GET /v1/chat/sessions/{key}/history/follow`). Not a stream; `--cursor=0` is preserved literally in the query string.
+- `goclaw channels writers test <instance-id> --group-id G --user-id U` — probe a (group, user) pair against a channel's writer policy without mutating state (`POST /v1/channels/instances/{id}/writers/test`). Request body has exactly two keys.
+- `goclaw activity aggregate --group-by {action|actor_type|entity_type|actor_id} [--from --to --limit --actor-type --actor-id --action --entity-type --entity-id]` — group audit-log activity by dimension with bucket counts (`GET /v1/activity/aggregate`). Attached as subcommand of existing `activity` parent.
+- `goclaw logs aggregate [--group-by {level|source}] [--level --source --from]` — summarize the runtime log ring buffer (`GET /v1/logs/runtime/aggregate`, admin-only). Distinct from `logs tail`. Epoch-millis `last_seen` rendered as RFC3339, never scientific notation.
 
 ### Notes
 - All new commands honor the AI-first ergonomics contract: `--output=json` envelope, central error handler, `--yes` for destructive ops, `--quiet` for CI.

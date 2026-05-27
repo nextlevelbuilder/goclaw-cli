@@ -1,7 +1,7 @@
 ---
 title: "Domain Coverage P6 — Backend-Unblocked CLI Surfaces"
 description: "Implement the 7 CLI commands now unblocked by digitopvn/goclaw PR #37 and PR #44. TDD-driven, 4 grouped implementation phases."
-status: pending
+status: in_progress
 priority: P2
 branch: "feat/p6-backend-unblocked-cli"
 base: "dev"
@@ -47,13 +47,13 @@ Issue #16 asked: *"Which beta tag ultimately contains backend commit `43049d3b`?
 
 | Phase | Name | Surfaces | Status |
 |-------|------|----------|--------|
-| 1 | [Scope Lock](./phase-01-scope-lock.md) | n/a | Pending |
-| 2 | [Traces Follow + Providers Reconnect](./phase-02-traces-follow-and-providers-reconnect.md) | 2 (PR #37) | Pending |
-| 3 | [Sessions Branch + Follow](./phase-03-sessions-branch-and-follow.md) | 2 (PR #44 chat) | Pending |
-| 4 | [Channels Writers Test](./phase-04-channels-writers-test.md) | 1 (PR #44 channels) | Pending |
-| 5 | [Activity + Logs Runtime Aggregate](./phase-05-activity-and-logs-aggregate.md) | 2 (PR #44 aggregation) | Pending |
-| 6 | [Tests and Docs Sweep](./phase-06-tests-and-docs.md) | n/a | Pending |
-| 7 | [Ship Readiness](./phase-07-ship-readiness.md) | n/a | Pending |
+| 1 | [Scope Lock](./phase-01-scope-lock.md) | n/a | Complete |
+| 2 | [Traces Follow + Providers Reconnect](./phase-02-traces-follow-and-providers-reconnect.md) | 2 (PR #37) | Complete |
+| 3 | [Sessions Branch + Follow](./phase-03-sessions-branch-and-follow.md) | 2 (PR #44 chat) | Complete |
+| 4 | [Channels Writers Test](./phase-04-channels-writers-test.md) | 1 (PR #44 channels) | Complete |
+| 5 | [Activity + Logs Runtime Aggregate](./phase-05-activity-and-logs-aggregate.md) | 2 (PR #44 aggregation) | Complete |
+| 6 | [Tests and Docs Sweep](./phase-06-tests-and-docs.md) | n/a | Complete |
+| 7 | [Ship Readiness](./phase-07-ship-readiness.md) — collapsed to single `/ck:ship official` invocation | n/a | In Progress |
 
 ## Command Surface Inventory
 
@@ -90,13 +90,13 @@ Do not add commands, stubs, hidden flags, or docs for APIs that still do not exi
 | File | Existing surfaces | New work |
 |------|------------------|----------|
 | `cmd/traces.go` | `list`, `get`, `export` | add `follow` subcommand |
-| `cmd/providers.go` + `providers_crud.go` + `providers_verify.go` | CRUD + verify | add `reconnect` subcommand |
-| `cmd/sessions.go` + `chat_sessions.go` | `list`, `preview`, `delete`, `reset`, `label`, `compact` | add `branch`, `follow` |
+| `cmd/providers.go` + `providers_verify.go` (Use: `verify-embedding`) + `providers_claude_cli.go` + `providers_codex_pool.go` | CRUD + verify-embedding | add `reconnect` subcommand |
+| `cmd/sessions.go` + `chat_sessions.go` | `list`, `preview`, `delete`, `reset`, `label`, `compact` (all → `/v1/sessions/...`) | add `branch`, `follow` (→ `/v1/chat/sessions/...`) |
 | `cmd/channels_writers.go` | `list`, `groups`, `add`, `remove` | add `test` |
-| _(no `cmd/admin_activity.go`)_ | — | new file `cmd/activity_aggregate.go` |
+| `cmd/admin.go:133` already declares `var activityCmd` (`Use: "activity"`, audit-log lister) | `goclaw activity` (lists audit log) | attach new `aggregate` as **subcommand** of existing `activityCmd` — new file `cmd/activity_aggregate.go` |
 | `cmd/logs.go` | `tail` (WS streaming) | add `aggregate` (HTTP, distinct subcommand) |
 
-No command-name collisions.
+**Collisions found:** `activityCmd` already declared at `cmd/admin.go:133` — new aggregate hangs off it as a subcommand (not a new top-level group). No other collisions. `providers verify` does NOT exist; actual command is `providers verify-embedding` (`cmd/providers_verify.go:11`).
 
 ## Dependencies
 
@@ -137,8 +137,42 @@ No command-name collisions.
 | Path-escape regression (RT-02 from P5) | Medium | TDD test for escaped session keys with `:` and `/` in phase 3 |
 | Scope creep into watch loops or replay | Medium | Explicit out-of-scope checklist in phase 6 red-team diff |
 | Untracked files in `feat/claude-skill-v0.1` accidentally staged | Low | This plan uses a clean worktree (`.claude/worktrees/elated-galileo-2c7cfd`), separate branch |
-| Naming collision with existing subcommands | Low | Verified inventory above; no collisions found |
+| Naming collision with existing subcommands | Resolved | Red-team found `activityCmd` collision at `cmd/admin.go:133`; phase 5 now attaches `aggregate` as subcommand of existing parent |
+| `buildBody` int-zero drop bug (`cmd/helpers.go:86-89`) corrupting `--up-to-index 0` / `--cursor 0` | Resolved | Phase 3 builds request body / query map directly for these required numeric fields; tests assert zero is preserved |
+| `/v1/chat/sessions/...` vs `/v1/sessions/...` prefix split confuses operators | Medium | Phase 3 documents the prefix split in Long-help for `branch`/`follow`; data domain matches existing `chat_sessions.go`'s `/v1/chat/sessions/...` callers |
 
 ## Handoff
 
 Recommended next: invoke `/ck:cook` to execute phase 1 first (scope lock + contract re-verification), then proceed phase-by-phase with TDD.
+
+## Red Team Review
+
+### Session — 2026-05-27
+**Reviewers:** 4 spawned (Security Adversary, Failure Mode Analyst, Assumption Destroyer, Scope & Complexity Critic). 3 returned full findings; Assumption Destroyer hit Anthropic session limit after producing partial output — covered by overlap with other lenses.
+**Findings:** 30 raw → deduplicated to 15 unique. User chose **Apply Critical + High (7 findings)**. 8 Mediums deferred (see notes).
+**Severity breakdown applied:** 2 Critical, 5 High.
+
+| # | Finding | Severity | Evidence | Applied To |
+|---|---------|----------|----------|------------|
+| 1 | `activityCmd` already exists at `cmd/admin.go:133` (audit-log lister) → new aggregate must be subcommand, not new top-level | Critical | `cmd/admin.go:133,172`; `cmd/cmd_test.go:18-57` | plan.md table, phase 5 |
+| 2 | `buildBody` at `cmd/helpers.go:86-89` drops `int v == 0` → `--up-to-index 0` and `--cursor 0` silently disappear | Critical | `cmd/helpers.go:86-89` | phase 3 |
+| 3 | Backend path `/v1/chat/sessions/{key}/...` vs existing `goclaw sessions <verb>` → `/v1/sessions/...` — document the Cobra-parent vs backend-tree split | High | `cmd/sessions.go:67,88,109,128`; `cmd/chat_sessions.go:5` | phase 3 |
+| 4 | `cmd/providers_crud.go` doesn't exist (stale plan claim) | High | `find cmd/ -name "providers_*.go"` | plan.md table |
+| 5 | Plan recommends `goclaw providers verify`; actual command is `verify-embedding` | High | `cmd/providers_verify.go:11` | phase 2 |
+| 6 | `logs aggregate` `last_seen` (epoch millis) renders as `1.76e+12` because `unmarshalMap` decodes JSON numbers as float64 + `str()` uses `%v` | High | `cmd/helpers.go:49-61` | phase 5 |
+| 7 | "One polling request" claim has no test that actually counts requests — copy-paste of `client.FollowStream` risk | High | `cmd/logs.go:43-47`; `internal/client/follow.go` | phase 2 + phase 3 |
+
+**Deferred (Medium, user-skipped this round):**
+- F8 logs aggregate redaction (TTY banner + secret-shape strip)
+- F9 ANSI/OSC escape sanitization in output renderer
+- F10 `--metadata k=v` permissive parser (empty keys, duplicates, multi-`=` for base64)
+- F11 phase 1 collision grep regex too narrow (partially fixed via F1 application)
+- F12 `cmd/sessions.go` 171 LOC + 2 new commands → split upfront (kept as conditional per existing plan language)
+- F13 `go test -race -count=1` in phase 6 to match CI
+- F14 `cmd/cmd_test.go` top-level list update — **resolved by F1 choice** (subcommand under existing activityCmd → no new top-level)
+
+### Whole-Plan Consistency Sweep
+- Files reread: plan.md, phase-01 through phase-07.
+- Decision deltas applied: activityCmd subcommand attachment; buildBody-zero workaround; providers-verify rename; epoch-millis renderer.
+- Reconciled stale references: 2 (existing CLI state table; risk row "Naming collision" updated below).
+- Unresolved contradictions: 0.

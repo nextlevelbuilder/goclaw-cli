@@ -48,24 +48,30 @@ goclaw logs aggregate [--group-by <level|source>] [--level <debug|info|warn|erro
   ```json
   {"source":"runtime","retention":"ring_buffer","capacity":100,"sample_size":25,"group_by":"level","buckets":[{"key":"warn","count":3,"last_seen":1760000000000}]}
   ```
-  Note: `last_seen` in this response is an **epoch millis number**, not a string. Output helpers must handle.
-- Table: `KEY`, `COUNT`, `LAST_SEEN`, plus a header summary line with `SOURCE`, `RETENTION`, `CAPACITY`, `SAMPLE_SIZE` if existing output helpers support it; otherwise drop to JSON-only summary.
+  Note: `last_seen` in this response is an **epoch millis number**, not a string.
+- **Renderer requirement (Red Team F6):** `unmarshalMap` at `cmd/helpers.go:49-61` decodes JSON numbers as `float64`; the shared `str()` helper uses `fmt.Sprintf("%v", v)`, which renders `1.76e+12` for large numbers. Implement a local `formatLastSeen(v interface{}) string`:
+  - If `v` is `string` → assume RFC3339 and return as-is.
+  - If `v` is `float64` or `int64` → treat as epoch millis and return `time.UnixMilli(int64(v)).UTC().Format(time.RFC3339)`.
+  - If nil/empty → return `"-"`.
+  Apply this helper in BOTH `activity aggregate` and `logs aggregate` table renderers so neither produces `1.76e+12`. Place the helper in `cmd/activity_aggregate.go` (or a small shared file `cmd/aggregate_helpers.go`) and import from `cmd/logs_aggregate.go`.
+- Table: `KEY`, `COUNT`, `LAST_SEEN` (via `formatLastSeen`), plus a header summary line with `SOURCE`, `RETENTION`, `CAPACITY`, `SAMPLE_SIZE` if existing output helpers support it; otherwise drop to JSON-only summary.
 - **Do not confuse with `goclaw logs tail` (WS streaming).**
 
 ## Files
 
-- New: `cmd/activity_aggregate.go` (no existing activity command group exists).
-  - Decide: place under a new top-level `activity` Cobra group, or attach to existing `admin` group? Codex prompt expects `goclaw activity aggregate` as top-level → create new `activityCmd` parent.
-- Modify: `cmd/logs.go` — append `logsAggregateCmd`, register on `logsCmd`. If file grows past 200 lines, extract to `cmd/logs_aggregate.go`.
+- New: `cmd/activity_aggregate.go` — declares `activityAggregateCmd` ONLY (no new top-level parent).
+  - **Red Team F1 resolution:** `activityCmd` already exists at `cmd/admin.go:133` (current behavior: lists audit log via `goclaw activity`). Attach the new aggregate as a subcommand in `init()`: `activityCmd.AddCommand(activityAggregateCmd)`. Do NOT declare a new `var activityCmd`. Do NOT touch `cmd/cmd_test.go` top-level list (no new top-level command added).
+  - Command UX: `goclaw activity aggregate --group-by ...` (subcommand under existing parent — natural namespacing, no `cmd_test.go` churn).
+- Modify: `cmd/logs.go` — append `logsAggregateCmd`, register on `logsCmd`. `cmd/logs.go` is 111 LOC today; adding aggregate may push past 200 → consider `cmd/logs_aggregate.go` upfront.
 - New: `cmd/activity_aggregate_test.go`
 - New: `cmd/logs_aggregate_test.go`
 
 ## TDD Sequence
 
 1. Red: activity aggregate test cases.
-2. Implement `activityCmd` + `activityAggregateCmd`; green.
-3. Red: logs aggregate test cases.
-4. Implement `logsAggregateCmd`; green.
+2. Implement `activityAggregateCmd` (no `activityCmd` declared — reuse existing parent from `cmd/admin.go:133`); green.
+3. Red: logs aggregate test cases (including the `last_seen` RFC3339 rendering assertion).
+4. Implement `logsAggregateCmd` + `formatLastSeen` helper; green.
 5. `go vet ./... && go build ./...` clean.
 
 ## Tests
@@ -86,14 +92,14 @@ goclaw logs aggregate [--group-by <level|source>] [--level <debug|info|warn|erro
 - Invalid `--group-by=foo` rejected before HTTP call.
 - `--level`, `--source`, `--from` build correct query.
 - JSON output preserves `retention`, `capacity`, `sample_size`.
-- Table tolerates numeric `last_seen` (epoch millis) without panicking.
+- **Render assertion (Red Team F6):** table cell for `LAST_SEEN` matches RFC3339 regex (`^\d{4}-\d{2}-\d{2}T`), NOT `1.76e+12` scientific-notation form. Assert rendered cell content via captured stdout, not absence of panic.
 
 ## Todo List
 
 - [ ] Red tests for activity aggregate.
-- [ ] `activityCmd` + `activityAggregateCmd` implemented + green.
-- [ ] Red tests for logs aggregate.
-- [ ] `logsAggregateCmd` implemented + green.
+- [ ] `activityAggregateCmd` implemented as subcommand of existing `activityCmd` (do NOT declare new parent); green.
+- [ ] Red tests for logs aggregate (incl. RFC3339 cell-content assertion).
+- [ ] `formatLastSeen` helper + `logsAggregateCmd` implemented; green.
 - [ ] `go vet` + `go build` clean.
 - [ ] Confirm `logs aggregate` is clearly distinct from `logs tail` in `--help`.
 - [ ] Phase status flipped to Complete.
@@ -106,8 +112,8 @@ goclaw logs aggregate [--group-by <level|source>] [--level <debug|info|warn|erro
 
 ## Risks
 
-- `last_seen` type mismatch between activity (RFC3339 string) and logs runtime (epoch millis int). Tests assert both shapes.
-- New top-level `activity` command might collide with future scope. Document the namespace decision in PR body.
+- `last_seen` type mismatch between activity (RFC3339 string) and logs runtime (epoch millis int). Resolved by `formatLastSeen` type-switch helper (Red Team F6).
+- ~~New top-level `activity` command might collide~~ — **resolved (Red Team F1):** aggregate attaches as subcommand of existing `activityCmd` at `cmd/admin.go:133`. No new top-level.
 
 ## Next Steps
 

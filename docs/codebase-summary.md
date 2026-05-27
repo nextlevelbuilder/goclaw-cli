@@ -1,7 +1,7 @@
 # GoClaw CLI - Codebase Summary
 
 **Generated from:** `repomix-output.xml` (2026-04-15), updated manually 2026-05-20
-**Phase Status:** P0-P4 Complete (AI-First Expansion); Super Admin API Parity Complete; Domain Coverage P5 Implemented
+**Phase Status:** P0-P4 Complete (AI-First Expansion); Super Admin API Parity Complete; Domain Coverage P5 + P6 (Backend-Unblocked) Implemented
 **Total Files:** 80+
 **Estimated Tokens:** 80,000+
 **Total Size:** 220+ KB
@@ -10,7 +10,7 @@
 
 ## Overview
 
-GoClaw CLI is a production-ready Go application providing comprehensive command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30+ command groups across modular command files with dual modes: interactive (human) and automation (CI/agent). Phases 0-4 (AI-first expansion) add AI ergonomics, admin/ops, migration, vault, and advanced agent/team/memory support. The 2026-05-18 super-admin parity work adds gateway upgrade, package updates, workstations, webhooks, MCP user credentials, secure env reveal, media/TTS/storage/channel fillers, and focused route-contract tests. The 2026-05-19 P3/P4 filler pass adds first-class profile commands, `GOCLAW_PROFILE`, `sessions compact`, WS health, trace filter polish, `codex-pool`, `api-keys rotate`, `config defaults`, chat session convenience wrappers, and `tools invoke --args`. The 2026-05-20 P5 filler pass adds team attachment download, skill-specific evolution suggestion apply, and fixes evolution update payload compatibility.
+GoClaw CLI is a production-ready Go application providing comprehensive command-line management for GoClaw AI agent gateway servers. Built with Cobra framework, it supports 30+ command groups across modular command files with dual modes: interactive (human) and automation (CI/agent). Phases 0-4 (AI-first expansion) add AI ergonomics, admin/ops, migration, vault, and advanced agent/team/memory support. The 2026-05-18 super-admin parity work adds gateway upgrade, package updates, workstations, webhooks, MCP user credentials, secure env reveal, media/TTS/storage/channel fillers, and focused route-contract tests. The 2026-05-19 P3/P4 filler pass adds first-class profile commands, `GOCLAW_PROFILE`, `sessions compact`, WS health, trace filter polish, `codex-pool`, `api-keys rotate`, `config defaults`, chat session convenience wrappers, and `tools invoke --args`. The 2026-05-20 P5 filler pass adds team attachment download, skill-specific evolution suggestion apply, and fixes evolution update payload compatibility. The 2026-05-27 P6 backend-unblocked pass adds seven new surfaces wired to backend PRs `#37` and `#44`: `traces follow`, `providers reconnect`, `sessions branch`, `sessions follow`, `channels writers test`, `activity aggregate`, and `logs aggregate` — all one-shot HTTP commands (no new watch loops; reuse the existing `client.FollowStream` only for true streaming surfaces).
 
 **Key Metrics:**
 - **70+ command files** in `cmd/` (modularized for maintainability)
