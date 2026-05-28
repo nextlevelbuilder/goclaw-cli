@@ -161,10 +161,16 @@ func (c *HTTPClient) do(method, path string, body any) (json.RawMessage, error) 
 		if resp.StatusCode != 429 && resp.StatusCode < 500 {
 			break
 		}
-		resp.Body.Close()
-		if attempt < 2 {
-			time.Sleep(time.Duration(1<<attempt) * time.Second)
+		// Final retryable response: keep the body open so the caller can
+		// decode the structured error envelope (status + code + message).
+		// Closing here would force a "read on closed body" downstream and
+		// collapse the typed APIError into an opaque wrapped error,
+		// losing the exit-code mapping for 5xx/429.
+		if attempt == 2 {
+			break
 		}
+		resp.Body.Close()
+		time.Sleep(time.Duration(1<<attempt) * time.Second)
 	}
 	defer resp.Body.Close()
 

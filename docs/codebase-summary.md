@@ -316,7 +316,7 @@ goclaw (root)
 │   ├── workspace (list, read, delete, upload, move)
 │   └── attachments download <team-id> <attachment-id> --output <file>
 ├── channels (list, contacts, pending-messages)
-├── traces (list, export)
+├── traces (list, get, export, follow)              # `get` validates id allowlist, renders header+span-tree+events for TTY, JSON for piped/`-o json`
 ├── memory (list, search, upsert)
 ├── knowledge-graph (entities, links, query)
 ├── usage (summary, detail, costs, timeseries, breakdown)

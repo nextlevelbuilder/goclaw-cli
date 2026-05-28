@@ -124,6 +124,18 @@ goclaw logs aggregate [--group-by <level|source>] [--level <l>] [--source <s>] [
 
 All are one-shot HTTP — no watch loops or WS streams. `logs aggregate` is admin-only on the server; `activity aggregate --group-by actor_id` is also admin-only (server-enforced).
 
+### Reading a Trace by ID
+
+```bash
+# Human-readable: header + span tree + events
+goclaw traces get <trace-id>
+
+# Machine-readable JSON (also auto-selected when stdout is piped)
+goclaw traces get <trace-id> -o json
+```
+
+Exit codes for `traces get`: `0` on success, `2` on permission denied, `3` on not-found, `4` on malformed id (rejected before any HTTP call — allowlist `^[A-Za-z0-9._-]+$`), `5` on upstream server failure, `6` on rate-limit / network-resource exhaustion.
+
 ## Backup & Restore
 
 ### System Backup

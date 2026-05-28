@@ -1,12 +1,16 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/url"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
+	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -61,17 +65,128 @@ var tracesListCmd = &cobra.Command{
 var tracesGetCmd = &cobra.Command{
 	Use: "get <traceID>", Short: "Get trace with span tree", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		id := strings.TrimSpace(args[0])
+		if err := validateTraceID(id); err != nil {
+			return err
+		}
 		c, err := newHTTP()
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/traces/" + args[0])
+		data, err := c.Get("/v1/traces/" + url.PathEscape(id))
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalMap(data))
+		var trace map[string]any
+		if err := json.Unmarshal(data, &trace); err != nil {
+			return fmt.Errorf("decode trace payload: %w", err)
+		}
+		if cfg.OutputFormat != "table" {
+			printer.Print(trace)
+			return nil
+		}
+		renderTraceTable(trace, os.Stdout)
 		return nil
 	},
+}
+
+// traceIDPattern restricts trace ids to a safe, URL-safe allowlist.
+// Blocks path-traversal (`..`, `/`, `\`), control characters, and whitespace
+// before any HTTP call is issued. PathEscape is still applied on top.
+var traceIDPattern = regexp.MustCompile(`^[A-Za-z0-9._-]+$`)
+
+func validateTraceID(id string) error {
+	if id == "" || id == "." || id == ".." {
+		return &client.APIError{Code: "INVALID_REQUEST", Message: "trace id is empty or reserved"}
+	}
+	if !traceIDPattern.MatchString(id) {
+		return &client.APIError{Code: "INVALID_REQUEST", Message: "trace id contains invalid characters (allowed: A-Z a-z 0-9 . _ -)"}
+	}
+	return nil
+}
+
+// renderTraceTable prints a human-readable summary: header card, span tree, events.
+func renderTraceTable(t map[string]any, w io.Writer) {
+	for _, row := range [][2]string{
+		{"TRACE_ID", str(t, "trace_id")}, {"AGENT_ID", str(t, "agent_id")},
+		{"SESSION_KEY", str(t, "session_key")}, {"STATUS", str(t, "status")},
+		{"DURATION_MS", str(t, "duration_ms")},
+	} {
+		if row[1] != "" {
+			fmt.Fprintf(w, "%-12s %s\n", row[0]+":", row[1])
+		}
+	}
+	if in, out, cost := str(t, "input_tokens"), str(t, "output_tokens"), str(t, "cost"); in+out+cost != "" {
+		fmt.Fprintf(w, "%-12s in=%s out=%s cost=%s\n", "TOKENS:", in, out, cost)
+	}
+	spans, _ := t["spans"].([]any)
+	if len(spans) == 0 {
+		fmt.Fprintln(w, "\nSPANS: (none)")
+	} else {
+		fmt.Fprintln(w, "\nSPANS:")
+		output.PrintTreeRoot(buildSpanTree(spans), w)
+	}
+	events, _ := t["events"].([]any)
+	fmt.Fprintf(w, "\nEVENTS (n=%d):\n", len(events))
+	for _, e := range events {
+		if m, ok := e.(map[string]any); ok {
+			fmt.Fprintf(w, "  - %s\n", str(m, "type"))
+		}
+	}
+}
+
+// buildSpanTree links spans via parent_span_id; spans whose parent isn't in this
+// trace attach to a virtual root. Children are kept in insertion order.
+func buildSpanTree(spans []any) output.TreeNode {
+	order := make([]string, 0, len(spans))
+	labels := make(map[string]string, len(spans))
+	children := make(map[string][]string, len(spans))
+	parentOf := make(map[string]string, len(spans))
+	for _, s := range spans {
+		m, ok := s.(map[string]any)
+		if !ok {
+			continue
+		}
+		id := str(m, "span_id")
+		if id == "" {
+			continue
+		}
+		label := id
+		if name := str(m, "name"); name != "" {
+			label = name + " [" + id + "]"
+		}
+		if kind := str(m, "kind"); kind != "" {
+			label += " kind=" + kind
+		}
+		if dur := str(m, "duration_ms"); dur != "" {
+			label += " " + dur + "ms"
+		}
+		labels[id] = label
+		order = append(order, id)
+		parentOf[id], _ = m["parent_span_id"].(string)
+	}
+	for _, id := range order {
+		if p := parentOf[id]; p != "" {
+			if _, ok := labels[p]; ok {
+				children[p] = append(children[p], id)
+				continue
+			}
+		}
+		children[""] = append(children[""], id)
+	}
+	var build func(id string) output.TreeNode
+	build = func(id string) output.TreeNode {
+		n := output.TreeNode{Name: labels[id]}
+		for _, c := range children[id] {
+			n.Children = append(n.Children, build(c))
+		}
+		return n
+	}
+	root := output.TreeNode{Name: "trace"}
+	for _, id := range children[""] {
+		root.Children = append(root.Children, build(id))
+	}
+	return root
 }
 
 var tracesExportCmd = &cobra.Command{

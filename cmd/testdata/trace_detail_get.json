@@ -1,0 +1,54 @@
+{
+  "_TODO_refresh": "stub fixture derived from traces follow payload shape; refresh against goclaw.zuey.me before merge per phase-03 reviewer gate",
+  "trace_id": "trace_FIXTURE_001",
+  "agent_id": "agent_FIXTURE_001",
+  "session_key": "session_FIXTURE_001",
+  "user_id": "user_REDACTED",
+  "tenant_id": "tenant_REDACTED",
+  "status": "success",
+  "started_at": "2026-05-28T10:00:00Z",
+  "ended_at": "2026-05-28T10:00:02Z",
+  "duration_ms": 2000,
+  "input_tokens": 120,
+  "output_tokens": 80,
+  "cost": "0.0042",
+  "spans": [
+    {
+      "span_id": "span_001",
+      "parent_span_id": null,
+      "name": "agent.run",
+      "kind": "agent",
+      "started_at": "2026-05-28T10:00:00Z",
+      "ended_at": "2026-05-28T10:00:02Z",
+      "duration_ms": 2000,
+      "status": "success"
+    },
+    {
+      "span_id": "span_002",
+      "parent_span_id": "span_001",
+      "name": "llm.call",
+      "kind": "llm",
+      "started_at": "2026-05-28T10:00:00Z",
+      "ended_at": "2026-05-28T10:00:01Z",
+      "duration_ms": 1500,
+      "status": "success",
+      "input_tokens": 120,
+      "output_tokens": 80
+    },
+    {
+      "span_id": "span_003",
+      "parent_span_id": "span_001",
+      "name": "tool.call",
+      "kind": "tool",
+      "started_at": "2026-05-28T10:00:01Z",
+      "ended_at": "2026-05-28T10:00:02Z",
+      "duration_ms": 400,
+      "status": "success"
+    }
+  ],
+  "events": [
+    {"event_id": "ev_001", "span_id": "span_002", "type": "llm.prompt", "timestamp": "2026-05-28T10:00:00Z"},
+    {"event_id": "ev_002", "span_id": "span_002", "type": "llm.completion", "timestamp": "2026-05-28T10:00:01Z"},
+    {"event_id": "ev_003", "span_id": "span_003", "type": "tool.invoke", "timestamp": "2026-05-28T10:00:01Z"}
+  ]
+}

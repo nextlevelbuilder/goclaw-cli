@@ -55,6 +55,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `goclaw activity aggregate --group-by {action|actor_type|entity_type|actor_id} [--from --to --limit --actor-type --actor-id --action --entity-type --entity-id]` — group audit-log activity by dimension with bucket counts (`GET /v1/activity/aggregate`). Attached as subcommand of existing `activity` parent.
 - `goclaw logs aggregate [--group-by {level|source}] [--level --source --from]` — summarize the runtime log ring buffer (`GET /v1/logs/runtime/aggregate`, admin-only). Distinct from `logs tail`. Epoch-millis `last_seen` rendered as RFC3339, never scientific notation.
 
+### Fixed
+
+- `goclaw traces get <id>` — TTY mode now renders a human-readable summary (header card + span tree + events list) instead of dumping raw JSON. JSON-mode payload unchanged. Decode failures surface as wrapped errors instead of an empty `{}`. Trace ids are validated against `^[A-Za-z0-9._-]+$` and reserved tokens (`.`, `..`) are rejected before any HTTP call. Distinct exit codes per failure: not-found → 3, permission-denied → 2, malformed-id → 4, server-failure → 5. Latent retry-body bug in `internal/client/http.go` fixed: the final 5xx/429 response body is now preserved so the typed `APIError` reaches the caller (previously collapsed to exit 1). Closes #17.
+
 ### Notes
 - All new commands honor the AI-first ergonomics contract: `--output=json` envelope, central error handler, `--yes` for destructive ops, `--quiet` for CI.
 - P4/P5 backlog was re-swept against the current CLI surface; already-covered items were removed from residual scope before implementation.
