@@ -56,8 +56,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `goclaw activity aggregate --group-by {action|actor_type|entity_type|actor_id} [--from --to --limit --actor-type --actor-id --action --entity-type --entity-id]` — group audit-log activity by dimension with bucket counts (`GET /v1/activity/aggregate`). Attached as subcommand of existing `activity` parent.
 - `goclaw logs aggregate [--group-by {level|source}] [--level --source --from]` — summarize the runtime log ring buffer (`GET /v1/logs/runtime/aggregate`, admin-only). Distinct from `logs tail`. Epoch-millis `last_seen` rendered as RFC3339, never scientific notation.
 
+**Runtime & Packages parity**
+- `goclaw credentials agent-credentials` — list/get/set/delete per-agent credential material for secure CLI credentials.
+- `goclaw packages updates apply-all [packages...]` — accepts positional package specs in addition to `--packages`.
+
 ### Fixed
 
+- `goclaw packages list` now decodes current server grouped payloads `{system,pip,npm,github}` in table mode while preserving raw object payloads for JSON/YAML.
+- `goclaw packages install` and `goclaw packages uninstall` now send the server-compatible `package` key; legacy `--runtime python|node` translates to `pip:`/`npm:` specs.
+- `goclaw packages runtimes`, `packages deny-groups`, and `packages github-releases --repo --limit` now match current server envelopes and required query parameters.
+- `goclaw credentials list`, `credentials presets`, `credentials agent-grants list`, and `credentials user-credentials list` now decode current server envelope payloads.
 - `goclaw traces list` now decodes the current server payload `{traces,total,limit,offset}`. JSON/YAML mode preserves that envelope; table mode renders rows from `traces` using `id`, `total_input_tokens`, `total_output_tokens`, and `total_cost`.
 - `goclaw traces get <id>` — TTY mode now renders a human-readable summary (header card + span tree) instead of dumping raw JSON. JSON-mode payload unchanged. Decode failures surface as wrapped errors instead of an empty `{}`. Trace ids are validated against `^[A-Za-z0-9._-]+$` and reserved tokens (`.`, `..`) are rejected before any HTTP call. Distinct exit codes per failure: not-found → 3, permission-denied → 2, malformed-id → 4, server-failure → 5. Latent retry-body bug in `internal/client/http.go` fixed: the final 5xx/429 response body is now preserved so the typed `APIError` reaches the caller (previously collapsed to exit 1). Closes #17.
 - `goclaw traces get <id>` now handles the current server detail payload `{trace,spans}` while preserving the server envelope in JSON/YAML mode.
