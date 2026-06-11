@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
@@ -29,7 +28,11 @@ var adminCredGrantsListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(rawPayload(data))
+			return nil
+		}
+		printer.Print(credentialGrantsTable(data))
 		return nil
 	},
 }
@@ -39,13 +42,9 @@ var adminCredGrantsCreateCmd = &cobra.Command{
 	Short: "Create an agent grant for a CLI credential",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bodyJSON, _ := cmd.Flags().GetString("body")
-		if bodyJSON == "" {
-			return fmt.Errorf("--body is required (JSON object)")
-		}
-		var body map[string]any
-		if err := json.Unmarshal([]byte(bodyJSON), &body); err != nil {
-			return fmt.Errorf("invalid --body JSON: %w", err)
+		body, err := jsonObjectFlag(cmd, "body", true)
+		if err != nil {
+			return err
 		}
 		c, err := newHTTP()
 		if err != nil {
@@ -84,13 +83,9 @@ var adminCredGrantsUpdateCmd = &cobra.Command{
 	Short: "Update an agent grant",
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bodyJSON, _ := cmd.Flags().GetString("body")
-		if bodyJSON == "" {
-			return fmt.Errorf("--body is required (JSON object)")
-		}
-		var body map[string]any
-		if err := json.Unmarshal([]byte(bodyJSON), &body); err != nil {
-			return fmt.Errorf("invalid --body JSON: %w", err)
+		body, err := jsonObjectFlag(cmd, "body", true)
+		if err != nil {
+			return err
 		}
 		c, err := newHTTP()
 		if err != nil {

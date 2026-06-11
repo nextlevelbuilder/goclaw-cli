@@ -1,10 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-
-	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -33,14 +29,10 @@ var adminCredentialsListCmd = &cobra.Command{
 			return err
 		}
 		if cfg.OutputFormat != "table" {
-			printer.Print(unmarshalList(data))
+			printer.Print(rawPayload(data))
 			return nil
 		}
-		tbl := output.NewTable("ID", "NAME", "CREATED")
-		for _, cr := range unmarshalList(data) {
-			tbl.AddRow(str(cr, "id"), str(cr, "name"), str(cr, "created_at"))
-		}
-		printer.Print(tbl)
+		printer.Print(cliCredentialsTable(data))
 		return nil
 	},
 }
@@ -53,8 +45,11 @@ var adminCredentialsCreateCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		name, _ := cmd.Flags().GetString("name")
-		data, err := c.Post("/v1/cli-credentials", map[string]any{"name": name})
+		body, err := credentialCreateBody(cmd)
+		if err != nil {
+			return err
+		}
+		data, err := c.Post("/v1/cli-credentials", body)
 		if err != nil {
 			return err
 		}
@@ -68,13 +63,9 @@ var adminCredentialsUpdateCmd = &cobra.Command{
 	Short: "Update a CLI credential",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bodyJSON, _ := cmd.Flags().GetString("body")
-		if bodyJSON == "" {
-			return fmt.Errorf("--body is required (JSON object)")
-		}
-		var body map[string]any
-		if err := json.Unmarshal([]byte(bodyJSON), &body); err != nil {
-			return fmt.Errorf("invalid --body JSON: %w", err)
+		body, err := jsonObjectFlag(cmd, "body", true)
+		if err != nil {
+			return err
 		}
 		c, err := newHTTP()
 		if err != nil {
@@ -140,7 +131,11 @@ var adminCredentialsPresetsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(rawPayload(data))
+			return nil
+		}
+		printer.Print(credentialPresetsTable(data))
 		return nil
 	},
 }
@@ -149,12 +144,9 @@ var adminCredentialsCheckBinaryCmd = &cobra.Command{
 	Use:   "check-binary",
 	Short: "Verify a CLI binary is accessible on the server",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bodyJSON, _ := cmd.Flags().GetString("body")
-		var body map[string]any
-		if bodyJSON != "" {
-			if err := json.Unmarshal([]byte(bodyJSON), &body); err != nil {
-				return fmt.Errorf("invalid --body JSON: %w", err)
-			}
+		body, err := jsonObjectFlag(cmd, "body", false)
+		if err != nil {
+			return err
 		}
 		c, err := newHTTP()
 		if err != nil {
@@ -170,8 +162,9 @@ var adminCredentialsCheckBinaryCmd = &cobra.Command{
 }
 
 func init() {
-	adminCredentialsCreateCmd.Flags().String("name", "", "Credential name (required)")
-	_ = adminCredentialsCreateCmd.MarkFlagRequired("name")
+	adminCredentialsCreateCmd.Flags().String("name", "", "Credential binary name")
+	adminCredentialsCreateCmd.Flags().String("preset", "", "Credential preset name")
+	adminCredentialsCreateCmd.Flags().String("body", "", "Create payload as JSON object")
 
 	adminCredentialsUpdateCmd.Flags().String("body", "", "Update payload as JSON object (required)")
 	adminCredentialsCheckBinaryCmd.Flags().String("body", "", "Check payload as JSON object")

@@ -2,7 +2,7 @@
 
 **Last Updated:** 2026-06-12
 **Phase Structure:** Legacy Phases 1-9 (bootstrap → CI/CD) + AI-First Expansion Phases 0-5 (2026-04-15)
-**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P6 ✓ COMPLETE; Super Admin API Parity ✓ COMPLETE; trace contract and trace search/filter CLI support implemented.
+**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P6 ✓ COMPLETE; Super Admin API Parity ✓ COMPLETE; Runtime & Packages CLI parity implemented; trace contract and trace search/filter CLI support implemented.
 **Next Phase:** Ship trace search/filter CLI PR to `dev` and verify beta release.
 
 ---
@@ -18,6 +18,23 @@
 - [x] Synced README, changelog, codebase summary, and plan artifacts.
 
 **Validation:** `/usr/local/go/bin/go test -count=1 ./cmd -run 'TestTracesList|TestTracesReplayCommandAbsent'`; `/usr/local/go/bin/go test -count=1 ./cmd`; `/usr/local/go/bin/go test -count=1 ./...`; `/usr/local/go/bin/go vet ./...`; `/usr/local/go/bin/go build ./...`.
+
+---
+
+## 2026-06-12: Runtime & Packages CLI Parity IMPLEMENTED
+
+**Objective:** Align CLI Runtime & Packages command contracts with current GoClaw server `dev` routes.
+
+**Deliverables:**
+- [x] Fixed `packages list` table rendering for grouped `{system,pip,npm,github}` payloads while preserving raw machine output.
+- [x] Fixed `packages install` and `packages uninstall` to send server-compatible `package` specs, translating `--runtime python|node` to `pip:`/`npm:`.
+- [x] Fixed `packages runtimes`, `packages deny-groups`, and `packages github-releases --repo --limit` for current server envelopes.
+- [x] Extended `packages updates apply-all` to accept positional package specs in addition to `--packages`.
+- [x] Fixed secure CLI credential list/presets/grants/user credential envelope parsing.
+- [x] Added `credentials agent-credentials` list/get/set/delete for per-agent credential material.
+- [x] Added focused contract tests for package and credential server payloads.
+
+**Validation:** `/usr/local/go/bin/go test ./...`; `/usr/local/go/bin/go build ./...`; `/usr/local/go/bin/go vet ./...`.
 
 ---
 
