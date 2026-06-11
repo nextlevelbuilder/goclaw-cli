@@ -78,7 +78,8 @@ echo "Analyze this log" | goclaw chat myagent
 | `storage` | Workspace file browser |
 | `approvals` | Execution approval management |
 | `delegations` | Delegation history |
-| `credentials` | CLI credential store |
+| `packages` | Runtime package inventory, installs, updates, runtimes, deny groups, GitHub releases |
+| `credentials` | CLI credential store, grants, user credentials, agent credentials |
 | `tts` | Text-to-speech operations |
 | `media` | Media upload/download |
 | `activity` | Audit log |
@@ -131,6 +132,40 @@ goclaw logs aggregate [--group-by <level|source>] [--level <l>] [--source <s>] [
 ```
 
 All are one-shot HTTP — no watch loops or WS streams. `logs aggregate` is admin-only on the server; `activity aggregate --group-by actor_id` is also admin-only (server-enforced).
+
+### Runtime & Packages
+
+```bash
+# Runtime inventory grouped by system, pip, npm, and GitHub package sources
+goclaw packages list
+
+# Install or uninstall with legacy runtime flags translated to server package specs
+goclaw packages install pandas --runtime python
+goclaw packages uninstall typescript --runtime node --yes
+
+# Runtime readiness, deny groups, GitHub release lookup, and update lifecycle
+goclaw packages runtimes
+goclaw packages deny-groups
+goclaw packages github-releases --repo cli/cli --limit 10
+goclaw packages updates list
+goclaw packages updates apply pip:pandas
+goclaw packages updates apply-all pip:pandas npm:typescript
+```
+
+### CLI Credentials
+
+```bash
+# Server-side secure CLI credential store
+goclaw credentials list
+goclaw credentials presets
+goclaw credentials create --body '{"preset":"git"}'
+
+# Access grants and per-principal credential material
+goclaw credentials agent-grants list <credential-id>
+goclaw credentials user-credentials list <credential-id>
+goclaw credentials agent-credentials list <credential-id>
+goclaw credentials agent-credentials set <credential-id> <agent-id> --body '{"credential_type":"pat","env":{"GITHUB_TOKEN":"..."}}'
+```
 
 ### Reading a Trace by ID
 

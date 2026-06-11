@@ -22,13 +22,11 @@ var packagesListCmd = &cobra.Command{
 			return err
 		}
 		if cfg.OutputFormat != "table" {
-			printer.Print(unmarshalList(data))
+			printer.Print(rawPayload(data))
 			return nil
 		}
-		tbl := output.NewTable("NAME", "VERSION", "RUNTIME", "STATUS")
-		for _, p := range unmarshalList(data) {
-			tbl.AddRow(str(p, "name"), str(p, "version"), str(p, "runtime"), str(p, "status"))
-		}
+		tbl := output.NewTable("SOURCE", "NAME", "VERSION", "DETAIL")
+		addInstalledPackageRows(tbl, data)
 		printer.Print(tbl)
 		return nil
 	},
@@ -44,7 +42,11 @@ var packagesInstallCmd = &cobra.Command{
 			return err
 		}
 		runtime, _ := cmd.Flags().GetString("runtime")
-		body := buildBody("name", args[0], "runtime", runtime)
+		spec, err := packageSpecFromRuntime(args[0], runtime)
+		if err != nil {
+			return err
+		}
+		body := buildBody("package", spec)
 		data, err := c.Post("/v1/packages/install", body)
 		if err != nil {
 			return err
@@ -68,7 +70,11 @@ var packagesUninstallCmd = &cobra.Command{
 			return err
 		}
 		runtime, _ := cmd.Flags().GetString("runtime")
-		body := buildBody("name", args[0], "runtime", runtime)
+		spec, err := packageSpecFromRuntime(args[0], runtime)
+		if err != nil {
+			return err
+		}
+		body := buildBody("package", spec)
 		data, err := c.Post("/v1/packages/uninstall", body)
 		if err != nil {
 			return err
@@ -91,7 +97,13 @@ var packagesRuntimesCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(rawPayload(data))
+			return nil
+		}
+		tbl := output.NewTable("NAME", "AVAILABLE", "VERSION", "READY")
+		addRuntimeRows(tbl, data)
+		printer.Print(tbl)
 		return nil
 	},
 }
@@ -108,7 +120,13 @@ var packagesDenyGroupsCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(rawPayload(data))
+			return nil
+		}
+		tbl := output.NewTable("NAME", "DESCRIPTION", "DEFAULT")
+		addDenyGroupRows(tbl, listFromResponse(data, "groups"))
+		printer.Print(tbl)
 		return nil
 	},
 }
@@ -117,15 +135,27 @@ var packagesGitHubReleasesCmd = &cobra.Command{
 	Use:   "github-releases",
 	Short: "List GitHub releases for tracked packages (GET /v1/packages/github-releases)",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		repo, _ := cmd.Flags().GetString("repo")
+		limit, _ := cmd.Flags().GetInt("limit")
+		path, err := githubReleasesPath(repo, limit)
+		if err != nil {
+			return err
+		}
 		c, err := newHTTP()
 		if err != nil {
 			return err
 		}
-		data, err := c.Get("/v1/packages/github-releases")
+		data, err := c.Get(path)
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(rawPayload(data))
+			return nil
+		}
+		tbl := output.NewTable("TAG", "NAME", "PRERELEASE", "ASSETS")
+		addGitHubReleaseRows(tbl, listFromResponse(data, "releases"))
+		printer.Print(tbl)
 		return nil
 	},
 }
@@ -133,6 +163,8 @@ var packagesGitHubReleasesCmd = &cobra.Command{
 func init() {
 	packagesInstallCmd.Flags().String("runtime", "", "Target runtime: python, node")
 	packagesUninstallCmd.Flags().String("runtime", "", "Target runtime: python, node")
+	packagesGitHubReleasesCmd.Flags().String("repo", "", "GitHub repository in owner/name format")
+	packagesGitHubReleasesCmd.Flags().Int("limit", 10, "Maximum releases to fetch")
 
 	packagesCmd.AddCommand(packagesListCmd, packagesInstallCmd, packagesUninstallCmd,
 		packagesRuntimesCmd, packagesDenyGroupsCmd, packagesGitHubReleasesCmd)

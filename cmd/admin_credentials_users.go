@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +26,11 @@ var adminCredUserListCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalList(data))
+		if cfg.OutputFormat != "table" {
+			printer.Print(rawPayload(data))
+			return nil
+		}
+		printer.Print(userCredentialsTable(data))
 		return nil
 	},
 }
@@ -57,13 +58,9 @@ var adminCredUserSetCmd = &cobra.Command{
 	Short: "Create or update a user credential entry",
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		bodyJSON, _ := cmd.Flags().GetString("body")
-		if bodyJSON == "" {
-			return fmt.Errorf("--body is required (JSON object)")
-		}
-		var body map[string]any
-		if err := json.Unmarshal([]byte(bodyJSON), &body); err != nil {
-			return fmt.Errorf("invalid --body JSON: %w", err)
+		body, err := jsonObjectFlag(cmd, "body", true)
+		if err != nil {
+			return err
 		}
 		c, err := newHTTP()
 		if err != nil {

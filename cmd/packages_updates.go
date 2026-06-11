@@ -63,8 +63,9 @@ var packagesUpdateApplyCmd = &cobra.Command{
 }
 
 var packagesUpdatesApplyAllCmd = &cobra.Command{
-	Use:   "apply-all",
+	Use:   "apply-all [packages...]",
 	Short: "Apply all cached package updates",
+	Args:  cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c, err := newHTTP()
 		if err != nil {
@@ -72,8 +73,10 @@ var packagesUpdatesApplyAllCmd = &cobra.Command{
 		}
 		packagesRaw, _ := cmd.Flags().GetString("packages")
 		body := map[string]any{}
-		if packagesRaw != "" {
-			body["packages"] = splitCSV(packagesRaw)
+		packages := splitCSV(packagesRaw)
+		packages = append(packages, args...)
+		if len(packages) > 0 {
+			body["packages"] = packages
 		}
 		data, err := c.Post("/v1/packages/updates/apply-all", body)
 		if err != nil {
