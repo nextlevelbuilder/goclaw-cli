@@ -16,12 +16,22 @@ func rawJSON(t *testing.T, w http.ResponseWriter, payload any) {
 
 func resetTracesListFlags(t *testing.T) {
 	t.Helper()
-	for _, name := range []string{"agent", "user", "session-key", "status", "channel", "since"} {
+	for _, name := range []string{
+		"agent", "user", "session-key", "status", "channel", "since",
+		"q", "agent-query", "channel-query", "from", "to", "tool-name", "has-tool-calls",
+	} {
 		resetTestFlag(tracesListCmd, name, "")
 	}
 	resetTestFlag(tracesListCmd, "root-only", "false")
 	resetTestFlag(tracesListCmd, "limit", "20")
 	resetTestFlag(tracesListCmd, "offset", "0")
+	for _, name := range []string{
+		"min-input-tokens", "max-input-tokens",
+		"min-output-tokens", "max-output-tokens",
+		"min-tool-calls", "max-tool-calls",
+	} {
+		resetTestFlag(tracesListCmd, name, "0")
+	}
 }
 
 func assertNoTracesReplayCommand(t *testing.T) {

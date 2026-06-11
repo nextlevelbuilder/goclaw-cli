@@ -47,6 +47,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `goclaw agents evolution update` now maps `--action=accept|reject` to the server-compatible `status=approved|rejected` payload.
 
 **P6 — Backend-unblocked surfaces (gateway `v3.12.0-beta.20`+)**
+- `goclaw traces list --q --agent-query --channel-query --from --to --min-input-tokens --max-input-tokens --min-output-tokens --max-output-tokens --min-tool-calls --max-tool-calls --tool-name --has-tool-calls` — forwards the trace search and advanced filters added by server PR #155 while preserving existing `--agent` as `agent_id`.
 - `goclaw traces follow --session-key|--agent [--since RFC3339] [--limit N]` — one-shot incremental trace polling (`GET /v1/traces/follow`). Re-invoke with returned cursor to advance; no WS stream, no watch loop.
 - `goclaw traces timeline <run-id> [--session-key K] [--limit N] [--offset N]` — read archived run timeline items (`GET /v1/runs/{runID}/timeline`) without replaying or mutating a run.
 - `goclaw providers reconnect <provider-id>` — hot-reconnect a provider, bumping the registry without touching credentials (`POST /v1/providers/{id}/reconnect`).
