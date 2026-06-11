@@ -101,6 +101,11 @@ plus the run timeline archive endpoint:
 # Paginated trace listing with server-supported filters
 goclaw traces list [--agent <id>] [--user <id>] [--session-key <key>] \
   [--status <status>] [--channel <name>] [--limit <n>] [--offset <n>]
+goclaw traces list --q "refund error" [--agent-query <text>] [--channel-query <text>] \
+  [--from <RFC3339>] [--to <RFC3339>] [--min-input-tokens <n>] \
+  [--max-input-tokens <n>] [--min-output-tokens <n>] [--max-output-tokens <n>] \
+  [--min-tool-calls <n>] [--max-tool-calls <n>] [--tool-name <text>] \
+  [--has-tool-calls <true|false>]
 
 # Incremental trace polling (one shot; rerun with returned cursor)
 goclaw traces follow --session-key <key> [--since <RFC3339>] [--limit <n>]

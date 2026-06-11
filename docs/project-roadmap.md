@@ -2,8 +2,22 @@
 
 **Last Updated:** 2026-06-12
 **Phase Structure:** Legacy Phases 1-9 (bootstrap → CI/CD) + AI-First Expansion Phases 0-5 (2026-04-15)
-**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P4 ✓ COMPLETE; Super Admin API Parity ✓ COMPLETE; Domain Coverage P5/P6 ✓ COMPLETE; Runtime & Packages CLI parity implemented pending beta ship.
-**Next Phase:** Ship Runtime & Packages parity PR to `dev` and verify beta release.
+**Current Status:** Legacy Phases 1-9 ✓ COMPLETE; P0-P6 ✓ COMPLETE; Super Admin API Parity ✓ COMPLETE; Runtime & Packages CLI parity implemented; trace contract and trace search/filter CLI support implemented.
+**Next Phase:** Ship trace search/filter CLI PR to `dev` and verify beta release.
+
+---
+
+## 2026-06-12: Trace Search/Filter CLI IMPLEMENTED
+
+**Objective:** Expose server PR #155 trace search and advanced filters through `goclaw traces list`.
+
+**Deliverables:**
+- [x] Added `traces list --q --agent-query --channel-query --from --to --min-input-tokens --max-input-tokens --min-output-tokens --max-output-tokens --min-tool-calls --max-tool-calls --tool-name --has-tool-calls`.
+- [x] Preserved existing `--agent` as `agent_id` for backward compatibility; `--agent-query` maps to the server `agent` text search.
+- [x] Added focused tests for full query forwarding, explicit `false`, explicit zero values, and replay absence.
+- [x] Synced README, changelog, codebase summary, and plan artifacts.
+
+**Validation:** `/usr/local/go/bin/go test -count=1 ./cmd -run 'TestTracesList|TestTracesReplayCommandAbsent'`; `/usr/local/go/bin/go test -count=1 ./cmd`; `/usr/local/go/bin/go test -count=1 ./...`; `/usr/local/go/bin/go vet ./...`; `/usr/local/go/bin/go build ./...`.
 
 ---
 

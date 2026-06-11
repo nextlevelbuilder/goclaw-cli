@@ -39,6 +39,19 @@ var tracesListCmd = &cobra.Command{
 		if v, _ := cmd.Flags().GetString("channel"); v != "" {
 			q.Set("channel", v)
 		}
+		setStringQueryFlag(cmd, q, "q", "q")
+		setStringQueryFlag(cmd, q, "agent-query", "agent")
+		setStringQueryFlag(cmd, q, "channel-query", "channel_query")
+		setStringQueryFlag(cmd, q, "from", "from")
+		setStringQueryFlag(cmd, q, "to", "to")
+		setChangedIntQueryFlag(cmd, q, "min-input-tokens", "min_input_tokens")
+		setChangedIntQueryFlag(cmd, q, "max-input-tokens", "max_input_tokens")
+		setChangedIntQueryFlag(cmd, q, "min-output-tokens", "min_output_tokens")
+		setChangedIntQueryFlag(cmd, q, "max-output-tokens", "max_output_tokens")
+		setChangedIntQueryFlag(cmd, q, "min-tool-calls", "min_tool_calls")
+		setChangedIntQueryFlag(cmd, q, "max-tool-calls", "max_tool_calls")
+		setStringQueryFlag(cmd, q, "tool-name", "tool_name")
+		setStringQueryFlag(cmd, q, "has-tool-calls", "has_tool_calls")
 		if v, _ := cmd.Flags().GetInt("limit"); v > 0 {
 			q.Set("limit", fmt.Sprintf("%d", v))
 		}
@@ -113,6 +126,21 @@ func validateTraceID(id string) error {
 		return &client.APIError{Code: "INVALID_REQUEST", Message: "trace id contains invalid characters (allowed: A-Z a-z 0-9 . _ -)"}
 	}
 	return nil
+}
+
+func setStringQueryFlag(cmd *cobra.Command, q url.Values, flagName, queryName string) {
+	v, _ := cmd.Flags().GetString(flagName)
+	if v != "" {
+		q.Set(queryName, v)
+	}
+}
+
+func setChangedIntQueryFlag(cmd *cobra.Command, q url.Values, flagName, queryName string) {
+	if !cmd.Flags().Changed(flagName) {
+		return
+	}
+	v, _ := cmd.Flags().GetInt(flagName)
+	q.Set(queryName, fmt.Sprintf("%d", v))
 }
 
 var tracesExportCmd = &cobra.Command{
@@ -308,6 +336,19 @@ func init() {
 	tracesListCmd.Flags().String("session-key", "", "Filter by session key")
 	tracesListCmd.Flags().String("status", "", "Filter: running, success, error")
 	tracesListCmd.Flags().String("channel", "", "Filter by channel")
+	tracesListCmd.Flags().String("q", "", "Search trace id, previews, session/channel labels, agent/channel labels, and span previews")
+	tracesListCmd.Flags().String("agent-query", "", "Search agent display name or key")
+	tracesListCmd.Flags().String("channel-query", "", "Search channel instance name, display name, or type")
+	tracesListCmd.Flags().String("from", "", "Filter traces from RFC3339 start time")
+	tracesListCmd.Flags().String("to", "", "Filter traces up to RFC3339 start time")
+	tracesListCmd.Flags().Int("min-input-tokens", 0, "Minimum total input tokens")
+	tracesListCmd.Flags().Int("max-input-tokens", 0, "Maximum total input tokens")
+	tracesListCmd.Flags().Int("min-output-tokens", 0, "Minimum total output tokens")
+	tracesListCmd.Flags().Int("max-output-tokens", 0, "Maximum total output tokens")
+	tracesListCmd.Flags().Int("min-tool-calls", 0, "Minimum tool-call count")
+	tracesListCmd.Flags().Int("max-tool-calls", 0, "Maximum tool-call count")
+	tracesListCmd.Flags().String("tool-name", "", "Search span tool names")
+	tracesListCmd.Flags().String("has-tool-calls", "", "Filter traces by tool-call presence: true or false")
 	tracesListCmd.Flags().Int("limit", 20, "Max results")
 	tracesListCmd.Flags().Int("offset", 0, "Pagination offset")
 	tracesListCmd.Flags().String("since", "", "Deprecated: use traces follow --since")
