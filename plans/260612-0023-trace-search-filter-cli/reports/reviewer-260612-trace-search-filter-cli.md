@@ -25,10 +25,7 @@ None.
 
 ## Low Priority
 
-- [plans/260612-0023-trace-search-filter-cli/phase-01-contract-lock.md:40] Phase status says completed, but Todo/Success Criteria boxes remain unchecked.
-  Fix: Lead/planner can mark completed boxes or leave phase status less final.
-- [plans/260612-0023-trace-search-filter-cli/phase-02-tdd-implementation.md:53] Same stale checkbox issue for completed implementation phase.
-  Fix: Lead/planner can sync plan bookkeeping after review.
+None. Earlier phase checkbox drift was resolved before shipping the PR branch.
 
 ## Edge Cases Found by Scout
 
@@ -47,7 +44,7 @@ None.
 ## Recommended Actions
 
 1. No source change required before ship.
-2. Optional: sync phase Todo checkboxes before final plan handoff.
+2. No source change required before ship.
 
 ## Metrics
 
