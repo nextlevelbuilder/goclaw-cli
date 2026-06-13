@@ -39,22 +39,45 @@ Claude: when user's intent matches, `Read` the listed reference file before cons
 
 | Intent signal | Reference |
 |---------------|-----------|
-| exec / run shell / remote command / approvals | [references/exec-workflow.md](references/exec-workflow.md) |
-| login / token / profile / tenant switch / credentials / api-keys | [references/auth-and-config.md](references/auth-and-config.md) |
-| agent list/get/create/delete, agent files, instances, wake | [references/agents-core.md](references/agents-core.md) |
-| agent share, link, delegate, regenerate | [references/agents-advanced.md](references/agents-advanced.md) |
-| chat with agent, session list/preview/delete | [references/chat-sessions.md](references/chat-sessions.md) |
-| health, status, logs, traces, usage, metrics | [references/monitoring-ops.md](references/monitoring-ops.md) |
-| knowledge graph, entity dedup, memory | [references/knowledge-memory.md](references/knowledge-memory.md) |
-| teams, members, team tasks, workspace files | [references/teams-collaboration.md](references/teams-collaboration.md) |
-| channels, contacts, pending messages, writers | [references/channels-messaging.md](references/channels-messaging.md) |
-| export / import / storage (workspace files) | [references/data-movement.md](references/data-movement.md) |
-| providers, skills, built-in tools list/config, packages | [references/providers-skills-tools.md](references/providers-skills-tools.md) |
-| cron, heartbeat, device pairing | [references/automation-scheduling.md](references/automation-scheduling.md) |
-| MCP servers, grants, requests | [references/mcp-integration.md](references/mcp-integration.md) |
-| tenants, system-config, audit activity, TTS | [references/admin-system.md](references/admin-system.md) |
-| media upload/download | [references/media.md](references/media.md) |
+| exec / run shell / remote command / approvals / tools builtin/custom | [references/exec-workflow.md](references/exec-workflow.md) |
+| login / token / api-keys / tenant switch | [references/auth-and-config.md](references/auth-and-config.md) |
+| CLI profiles (server config), connections | [references/profile.md](references/profile.md) |
+| credential store, grants, presets | [references/credentials.md](references/credentials.md) |
+| agents CRUD (create, list, update, delete, files, instances, wake) | [references/agents-crud.md](references/agents-crud.md) |
+| agents sharing, delegation links, history, wait, regenerate, resummon | [references/agents-sharing-delegation.md](references/agents-sharing-delegation.md) |
+| agents export, import, merge archives | [references/agents-export-import.md](references/agents-export-import.md) |
+| agents episodic memory, evolution metrics, suggestions, skill evolution | [references/agents-memory.md](references/agents-memory.md) |
+| agents orchestration, identity, skills, prompt-preview, lifecycle (summon, cancel, sync, v3-flags) | [references/agents-orchestration.md](references/agents-orchestration.md) |
+| chat single-shot, continue session, connectivity test | [references/chat-basic.md](references/chat-basic.md) |
+| chat session operations (list, preview, delete, reset, label, branch, compact) | [references/chat-sessions.md](references/chat-sessions.md) |
+| chat message history, replay | [references/chat-history.md](references/chat-history.md) |
+| chat message injection, session status, follow | [references/chat-injection.md](references/chat-injection.md) |
+| health, status, logs (tail), traces, usage, metrics | [references/monitoring-ops.md](references/monitoring-ops.md) |
+| knowledge graph (dedup, entities, stats), agent episodic memory | [references/knowledge-memory.md](references/knowledge-memory.md) |
+| knowledge vault (documents, search, graph, enrichment, upload) | [references/vault.md](references/vault.md) |
+| teams, members, team tasks, attachments, events, scopes, workspace | [references/teams-collaboration.md](references/teams-collaboration.md) |
+| channels, contacts, instances, pending, tenant-users, writers | [references/channels-messaging.md](references/channels-messaging.md) |
+| inter-agent messaging (send), pending message management | [references/channels-messaging.md](references/channels-messaging.md) |
+| export / import agents/teams/skills/mcp (portable archives) | [references/data-movement.md](references/data-movement.md) |
+| storage (list, get, upload, delete, move, size), files (sign) | [references/data-movement.md](references/data-movement.md) |
+| providers (create/get/list), embedding status, skills, tools, packages | [references/providers-skills-tools.md](references/providers-skills-tools.md) |
+| LLM provider management, OAuth (ChatGPT, OpenAI) | [references/oauth.md](references/oauth.md) |
+| cron jobs (create, schedule, run, history) | [references/automation-scheduling.md](references/automation-scheduling.md) |
+| heartbeat (agent health monitoring), device pairing, workstations | [references/automation-scheduling.md](references/automation-scheduling.md) |
+| MCP servers, grants, requests, integration | [references/mcp-integration.md](references/mcp-integration.md) |
+| tenants (CRUD, users), audit activity (activity log), TTS status | [references/admin-system.md](references/admin-system.md) |
+| per-tenant system-config KV store | [references/admin-system.md](references/admin-system.md) |
+| server-level config schema/defaults/get/patch/apply, system upgrade | [references/system-config.md](references/system-config.md) |
+| media upload/download, quota | [references/media.md](references/media.md) |
 | API documentation browsing | [references/docs-api.md](references/docs-api.md) |
+| backup/restore (system/tenant), preflight, S3 integration | [references/backup-restore.md](references/backup-restore.md) |
+| inbound webhooks (HTTP callbacks to external services) | [references/webhooks.md](references/webhooks.md) |
+| event hooks (internal system routing, handlers, matchers) | [references/hooks.md](references/hooks.md) |
+| voice catalog management, TTS voices | [references/voices.md](references/voices.md) |
+| coding-agent workstations (isolated environments, permissions, activity) | [references/workstations.md](references/workstations.md) |
+| server edition info, feature availability, license | [references/edition.md](references/edition.md) |
+| quota inspection (token/API usage by agent) | [references/quota.md](references/quota.md) |
+| user search and discovery (cross-tenant) | [references/users.md](references/users.md) |
 
 ## Compatibility
 

@@ -6,94 +6,108 @@ User wants to send a message to an agent, inject input mid-run, abort a running 
 
 ## Commands in scope
 
-- `goclaw chat <agent> -m "<msg>" --no-stream` — single-shot (source: `cmd/chat.go:44-47`)
-- `goclaw chat inject <agent> --text "..."` — inject into running session
-- `goclaw chat status <agent>` — session run status (WS call `chat.session.status`)
-- `goclaw chat abort <agent>` — abort running agent (WS call `chat.abort`)
-- `goclaw sessions list` / `get` / `preview <key>` / `delete` / `reset` / `label` — session CRUD
-- `goclaw chat <agent>` *without* `-m` → **interactive REPL, skill REFUSES**
+- `goclaw sessions list` — list chat sessions (source: `cmd/sessions.go`)
+- `goclaw sessions get <id>` — get session details (alias for preview)
+- `goclaw sessions preview <id>` — preview session transcript
+- `goclaw sessions delete <id>` — delete session
+- `goclaw sessions reset <id>` — clear messages, keep session
+- `goclaw sessions label <id>` — set/change session label
+- `goclaw sessions branch <id>` — branch conversation from point
+- `goclaw sessions compact` — batch delete old sessions
 
 ## Verified flags
-
-### `chat <agent>`
-| Flag | Type | Purpose |
-| --- | --- | --- |
-| `-m, --message` | string | Single-shot message (source: `cmd/chat.go:280`) |
-| `--session <key>` | string | Continue existing session |
-| `--no-stream` | bool | Wait for full response instead of streaming |
-
-### `chat inject`
-| Flag | Type | Purpose |
-| --- | --- | --- |
-| `--text` | string (required) | Text to inject |
-| `--session` | string | Session key |
 
 ### `sessions list`
 | Flag | Type | Purpose |
 | --- | --- | --- |
-| `--agent` | string | Filter by agent ID |
-| `--user` | string | Filter by user ID |
-| `--limit` | int | Max results |
+| `--agent <id>` | string | Filter by agent ID |
+| `--user <id>` | string | Filter by user ID |
+| `--limit <n>` | int | Max results (default 20) |
+| `--offset <n>` | int | Pagination offset |
 
-### `sessions label`
+### `sessions preview/delete/reset/label`
 | Flag | Type | Purpose |
 | --- | --- | --- |
-| `--label` | string (required) | New label |
+| `<id>` | session ID | Session identifier |
+| (label only) `--label <l>` | string | New label name |
+
+### `sessions branch`
+| Flag | Type | Purpose |
+| --- | --- | --- |
+| `<id>` | session ID | Session to branch from |
+| `--from-message <n>` | int | Branch point (message index) |
+| `--label <l>` | string | Label for new branch |
+
+### `sessions compact`
+| Flag | Type | Purpose |
+| --- | --- | --- |
+| `--older-than <d>` | duration | Delete sessions older than (e.g., `30d`) |
 
 ## JSON output
 
-- ✅ `chat -m ... --output json` — NDJSON event stream (`chat.go:92-98`)
-- ✅ `chat -m ... --no-stream --output json` — single JSON map
-- ✅ `sessions list/preview` — JSON
-- ⚠️ `sessions delete/reset/label` — `printer.Success` text only
+- ✅ `sessions list/preview/get` — JSON
+- ⚠️ `sessions delete/reset/label/branch/compact` — success text only
 
 ## Destructive ops
 
-| Command | Why destructive |
+| Command | Confirm |
 | --- | --- |
-| `sessions delete` | drops session + messages (tui.Confirm at `sessions.go:80`) |
-| `sessions reset` | clears messages, keeps key (tui.Confirm at `sessions.go:101`) |
-| `chat abort` | force-stops running agent mid-tool-call — **no `--yes` flag**, still warn user |
+| `sessions delete` | YES (permanent) |
+| `sessions reset` | YES (clears history) |
+| `sessions compact --older-than <d>` | YES (batch delete) |
 
 ## Common patterns
 
-### Example 1: single-shot question
-```bash
-goclaw chat my-agent -m "Summarize today's activity" --no-stream --output json
-```
-
-### Example 2: continue previous session
-```bash
-goclaw chat my-agent -m "Based on that, what next?" --session sess_abc --output json
-```
-
-### Example 3: pipe stdin
-```bash
-echo "Analyze this log" | goclaw chat my-agent --output json
-```
-
-### Example 4: list sessions for agent + preview one
+### List sessions for agent
 ```bash
 goclaw sessions list --agent <agent-id> --limit 10 --output json
-goclaw sessions preview <session-key> --output json
 ```
 
-### Example 5: abort runaway agent
+### Preview session transcript
 ```bash
-# Always confirm with user first
-goclaw chat abort my-agent --session <key>
+goclaw sessions preview <session-id> --limit 50 --output json
+```
+
+### Label session for organization
+```bash
+goclaw sessions label <session-id> --label "Bug investigation - Q2 2026"
+```
+
+### Branch conversation from point
+```bash
+goclaw sessions branch <session-id> --from-message 15 --label "Alternative path" --output json
+# → new session ID (child of original)
+```
+
+### Reset session (clear history)
+```bash
+goclaw sessions reset <session-id> --yes
+```
+
+### Delete session
+```bash
+goclaw sessions delete <session-id> --yes
+```
+
+### Batch delete old sessions
+```bash
+goclaw sessions compact --older-than 90d --yes
+# deletes all sessions older than 90 days
 ```
 
 ## Edge cases & gotchas
 
-- **Interactive mode detection:** `chat <agent>` with no `-m` and no stdin → TUI REPL with `/exit`, `/abort`, `/sessions`, `/clear` slash commands (`chat.go:148`). Skill MUST always pass `-m` or pipe stdin.
-- **Streaming NDJSON:** when `--output json` without `--no-stream`, each event is a JSON line: `{"event":"chunk|tool.call|tool.result|run.completed","data":{...}}`. Parse line-by-line, stop at `run.completed`.
-- **`chat abort` is not streaming.** Safe to call. But recovers no work done before abort.
-- **Session key vs session ID:** API uses `session_key` (human-readable, stable across resets); list shows both.
-- **Token accounting:** `sessions list --output json` includes `input_tokens`/`output_tokens` per session — useful for cost tracing.
+- **Session key vs ID:** API uses `session_key` (human-readable, stable); list shows both. Use key for referencing.
+- **Branching:** creates new session with copied history up to branch point. Original unchanged.
+- **Reset:** clears all messages but preserves agent/user bindings and session key.
+- **Compact:** batch deletes. `--older-than` uses relative durations (`30d`, `90d`, `6mo`). No undo.
+- **Label:** purely metadata for humans; doesn't affect agent behavior.
+- **Token accounting:** session responses include `input_tokens`/`output_tokens` per message.
+- **Message pagination:** use `--limit` + `--offset` for large histories to avoid huge JSON.
 
 ## Cross-refs
 
-- Approvals from tool calls: [exec-workflow.md](exec-workflow.md) (canonical home)
-- Agent lifecycle: [agents-core.md](agents-core.md)
-- Traces per LLM call: [monitoring-ops.md](monitoring-ops.md)
+- Basic chat operations: [chat-basic.md](chat-basic.md)
+- Chat history & replay: [chat-history.md](chat-history.md)
+- Message injection: [chat-injection.md](chat-injection.md)
+- Agent lifecycle: [agents-crud.md](agents-crud.md)
