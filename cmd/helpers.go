@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 )
 
 // newHTTP creates an authenticated HTTP client from current config.

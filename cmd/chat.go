@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -63,34 +63,28 @@ func chatSingleShot(agentKey, message, session string, noStream bool) error {
 	}
 	defer ws.Close()
 
-	params := map[string]any{
-		"agent_key": agentKey,
-		"message":   message,
-	}
-	if session != "" {
-		params["session_key"] = session
+	params := client.ChatSendParams{
+		AgentID:    agentKey,
+		Message:    message,
+		SessionKey: session,
 	}
 
 	if noStream || cfg.OutputFormat == "json" {
 		// Non-streaming: collect full response
-		resp, err := ws.Call("chat.send", params)
+		result, err := ws.ChatSend(params)
 		if err != nil {
 			return err
 		}
 		if cfg.OutputFormat == "json" {
-			printer.Print(unmarshalMap(resp))
+			printer.Print(result)
 		} else {
-			var result struct {
-				Content string `json:"content"`
-			}
-			_ = json.Unmarshal(resp, &result)
 			fmt.Println(result.Content)
 		}
 		return nil
 	}
 
 	// Streaming mode
-	_, err = ws.Stream("chat.send", params, func(e *client.WSEvent) {
+	_, err = ws.ChatSendStream(params, func(e *client.WSEvent) {
 		if cfg.OutputFormat == "json" {
 			// NDJSON output
 			line := map[string]any{"event": e.Event, "data": unmarshalMap(e.Payload)}
@@ -151,34 +145,32 @@ func chatInteractive(agentKey, session string) error {
 			fmt.Println("Goodbye!")
 			return nil
 		case "/abort":
-			_, _ = ws.Call("chat.abort", map[string]any{"agent_key": agentKey})
+			_, _ = ws.ChatAbort(client.ChatAbortParams{SessionKey: session})
 			fmt.Println("[aborted]")
 			continue
 		case "/sessions":
-			resp, err := ws.Call("sessions.list", map[string]any{"agent_key": agentKey})
+			result, err := ws.SessionsList(client.SessionsListParams{AgentID: agentKey})
 			if err != nil {
 				fmt.Printf("Error: %s\n", err)
 				continue
 			}
-			fmt.Println(string(resp))
+			fmt.Println(string(result.Sessions))
 			continue
 		case "/clear":
 			if session != "" {
-				_, _ = ws.Call("sessions.reset", map[string]any{"session_key": session})
+				_, _ = ws.SessionsReset(client.SessionsKeyParams{Key: session})
 				fmt.Println("[session cleared]")
 			}
 			continue
 		}
 
-		params := map[string]any{
-			"agent_key": agentKey,
-			"message":   input,
-		}
-		if session != "" {
-			params["session_key"] = session
+		params := client.ChatSendParams{
+			AgentID:    agentKey,
+			Message:    input,
+			SessionKey: session,
 		}
 
-		_, err := ws.Stream("chat.send", params, func(e *client.WSEvent) {
+		_, err := ws.ChatSendStream(params, func(e *client.WSEvent) {
 			switch e.Event {
 			case "chunk":
 				var chunk struct {

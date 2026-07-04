@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
 )
@@ -22,15 +22,11 @@ var configGetCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		params := map[string]any{}
-		if v, _ := cmd.Flags().GetString("key"); v != "" {
-			params["key"] = v
-		}
-		data, err := ws.Call("config.get", params)
+		result, err := ws.ConfigGet()
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalMap(data))
+		printer.Print(result)
 		return nil
 	},
 }
@@ -51,11 +47,11 @@ var configApplyCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("read config file: %w", err)
 		}
-		var cfg map[string]any
-		if err := json.Unmarshal(data, &cfg); err != nil {
-			return fmt.Errorf("parse config: %w", err)
-		}
-		_, err = ws.Call("config.apply", cfg)
+		baseHash, _ := cmd.Flags().GetString("base-hash")
+		_, err = ws.ConfigApply(client.ConfigApplyParams{
+			Raw:      string(data),
+			BaseHash: baseHash,
+		})
 		if err != nil {
 			return err
 		}
@@ -65,7 +61,7 @@ var configApplyCmd = &cobra.Command{
 }
 
 var configPatchCmd = &cobra.Command{
-	Use: "patch", Short: "Patch a config key",
+	Use: "patch", Short: "Patch config with a partial JSON5 file",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ws, err := newWS("cli")
 		if err != nil {
@@ -75,20 +71,20 @@ var configPatchCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		key, _ := cmd.Flags().GetString("key")
-		value, _ := cmd.Flags().GetString("value")
-
-		// Try to parse value as JSON, fall back to string
-		var parsedVal any
-		if err := json.Unmarshal([]byte(value), &parsedVal); err != nil {
-			parsedVal = value
+		filePath, _ := cmd.Flags().GetString("file")
+		data, err := os.ReadFile(filePath)
+		if err != nil {
+			return fmt.Errorf("read patch file: %w", err)
 		}
-
-		_, err = ws.Call("config.patch", map[string]any{"key": key, "value": parsedVal})
+		baseHash, _ := cmd.Flags().GetString("base-hash")
+		_, err = ws.ConfigPatch(client.ConfigApplyParams{
+			Raw:      string(data),
+			BaseHash: baseHash,
+		})
 		if err != nil {
 			return err
 		}
-		printer.Success(fmt.Sprintf("Config %s updated", key))
+		printer.Success("Configuration patched")
 		return nil
 	},
 }
@@ -104,11 +100,11 @@ var configSchemaCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		data, err := ws.Call("config.schema", nil)
+		result, err := ws.ConfigSchema()
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalMap(data))
+		printer.Print(result)
 		return nil
 	},
 }
@@ -233,13 +229,12 @@ Example:
 }
 
 func init() {
-	configGetCmd.Flags().String("key", "", "Config key path")
-	configApplyCmd.Flags().String("file", "", "Config JSON file")
+	configApplyCmd.Flags().String("file", "", "Config JSON5 file (full config)")
 	_ = configApplyCmd.MarkFlagRequired("file")
-	configPatchCmd.Flags().String("key", "", "Config key")
-	configPatchCmd.Flags().String("value", "", "Config value")
-	_ = configPatchCmd.MarkFlagRequired("key")
-	_ = configPatchCmd.MarkFlagRequired("value")
+	configApplyCmd.Flags().String("base-hash", "", "Base config hash for optimistic concurrency (from config get)")
+	configPatchCmd.Flags().String("file", "", "Partial config JSON5 file to merge")
+	_ = configPatchCmd.MarkFlagRequired("file")
+	configPatchCmd.Flags().String("base-hash", "", "Base config hash for optimistic concurrency (from config get)")
 
 	// Permissions list
 	configPermissionsListCmd.Flags().String("agent", "", "Agent key or ID")

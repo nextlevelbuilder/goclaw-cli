@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 )
 
 func TestDownloadSigned_NoAuthHeader(t *testing.T) {

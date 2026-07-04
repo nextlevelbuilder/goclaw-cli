@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/gorilla/websocket"
@@ -44,18 +46,21 @@ func setupConfigTest(serverURL string) {
 }
 
 func TestConfigGet(t *testing.T) {
-	srv := mockConfigWSServer(t, map[string]any{"key": "agent.model", "value": "gpt-4o"})
+	srv := mockConfigWSServer(t, map[string]any{
+		"config": map[string]any{"agent": map[string]any{"model": "gpt-4o"}},
+		"hash":   "h1",
+		"path":   "/config.json5",
+	})
 	defer srv.Close()
 	setupConfigTest(srv.URL)
 
-	configGetCmd.Flags().Set("key", "agent.model")
 	if err := configGetCmd.RunE(configGetCmd, nil); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
 
 func TestConfigSchema(t *testing.T) {
-	srv := mockConfigWSServer(t, map[string]any{"schema": map[string]any{}})
+	srv := mockConfigWSServer(t, map[string]any{"json": map[string]any{}})
 	defer srv.Close()
 	setupConfigTest(srv.URL)
 
@@ -65,12 +70,18 @@ func TestConfigSchema(t *testing.T) {
 }
 
 func TestConfigPatch(t *testing.T) {
-	srv := mockConfigWSServer(t, map[string]any{"ok": true})
+	srv := mockConfigWSServer(t, map[string]any{
+		"ok": true, "path": "/config.json5", "config": map[string]any{}, "hash": "h2", "restart": false,
+	})
 	defer srv.Close()
 	setupConfigTest(srv.URL)
 
-	configPatchCmd.Flags().Set("key", "agent.model")
-	configPatchCmd.Flags().Set("value", "gpt-4o")
+	patchFile := filepath.Join(t.TempDir(), "patch.json5")
+	if err := os.WriteFile(patchFile, []byte(`{agent: {model: "gpt-4o"}}`), 0o600); err != nil {
+		t.Fatalf("write patch file: %v", err)
+	}
+	configPatchCmd.Flags().Set("file", patchFile)
+	configPatchCmd.Flags().Set("base-hash", "")
 	if err := configPatchCmd.RunE(configPatchCmd, nil); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

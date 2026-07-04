@@ -96,7 +96,7 @@ var myCmd = &cobra.Command{
 
 ---
 
-### 3. Client Layer (internal/client/)
+### 3. Client Layer (client/)
 
 #### HTTP Client (http.go)
 
@@ -601,7 +601,7 @@ TLS Encryption (HTTPS by default, --insecure only for testing)
 
 ### Custom Auth Methods
 
-1. Extend `internal/client/auth.go`
+1. Extend `client/auth.go`
 2. Implement credential storage backend
 3. Register in auth command
 4. Update login flow

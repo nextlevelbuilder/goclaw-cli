@@ -1,6 +1,9 @@
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/nextlevelbuilder/goclaw-cli/client"
+	"github.com/spf13/cobra"
+)
 
 var chatReplayCmd = &cobra.Command{
 	Use:   "replay <agent>",
@@ -24,22 +27,14 @@ func runChatHistory(agent, session, before string, limit int) error {
 	}
 	defer ws.Close()
 
-	params := map[string]any{
-		"agent_key": agent,
-		"limit":     limit,
-	}
-	if before != "" {
-		params["before"] = before
-	}
-	if session != "" {
-		params["session_key"] = session
-	}
-
-	data, err := ws.Call("chat.history", params)
+	result, err := ws.ChatHistory(client.ChatHistoryParams{
+		AgentID:    agent,
+		SessionKey: session,
+	})
 	if err != nil {
 		return err
 	}
-	printer.Print(unmarshalList(data))
+	printer.Print(unmarshalList(result.Messages))
 	return nil
 }
 

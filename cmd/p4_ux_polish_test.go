@@ -386,8 +386,8 @@ func TestChatReplayAndResumeUseExistingWSContracts(t *testing.T) {
 	}
 	<-seen // connect
 	history := <-seen
-	if history.Method != "chat.history" || history.Params["agent_key"] != "agent-1" ||
-		history.Params["session_key"] != "sess-1" {
+	if history.Method != "chat.history" || history.Params["agentId"] != "agent-1" ||
+		history.Params["sessionKey"] != "sess-1" {
 		t.Fatalf("history call = %#v", history)
 	}
 
@@ -399,8 +399,8 @@ func TestChatReplayAndResumeUseExistingWSContracts(t *testing.T) {
 	}
 	<-seen // connect
 	send := <-seen
-	if send.Method != "chat.send" || send.Params["agent_key"] != "agent-1" ||
-		send.Params["session_key"] != "sess-2" || send.Params["message"] != "hi" {
+	if send.Method != "chat.send" || send.Params["agentId"] != "agent-1" ||
+		send.Params["sessionKey"] != "sess-2" || send.Params["message"] != "hi" {
 		t.Fatalf("send call = %#v", send)
 	}
 }
@@ -458,8 +458,11 @@ func mockCaptureRPCServer(t *testing.T, seen chan<- wsCall) *httptest.Server {
 			}
 			seen <- wsCall{Method: req.Method, Params: req.Params}
 			payload, _ := json.Marshal([]map[string]any{{"content": "ok"}})
-			if req.Method == "chat.send" || req.Method == "connect" {
+			switch req.Method {
+			case "chat.send", "connect":
 				payload, _ = json.Marshal(map[string]any{"content": "ok"})
+			case "chat.history":
+				payload, _ = json.Marshal(map[string]any{"messages": []map[string]any{{"content": "ok"}}})
 			}
 			_ = conn.WriteJSON(map[string]any{
 				"type":    "res",

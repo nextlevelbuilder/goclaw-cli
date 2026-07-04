@@ -67,10 +67,12 @@ func setupChatTest(serverURL string) {
 
 func TestChatHistory_ReturnsMessageArray(t *testing.T) {
 	messages := []any{
-		map[string]any{"role": "user", "content": "Hello", "created_at": "2024-01-01T00:00:00Z"},
-		map[string]any{"role": "assistant", "content": "Hi there!", "created_at": "2024-01-01T00:00:01Z"},
+		map[string]any{"role": "user", "content": "Hello", "createdAt": "2024-01-01T00:00:00Z"},
+		map[string]any{"role": "assistant", "content": "Hi there!", "createdAt": "2024-01-01T00:00:01Z"},
 	}
-	srv := mockChatServer(t, map[string]any{"chat.history": messages})
+	srv := mockChatServer(t, map[string]any{
+		"chat.history": map[string]any{"messages": messages},
+	})
 	defer srv.Close()
 	setupChatTest(srv.URL)
 
@@ -85,7 +87,9 @@ func TestChatHistory_ReturnsMessageArray(t *testing.T) {
 }
 
 func TestChatHistory_WithLimitAndBefore(t *testing.T) {
-	srv := mockChatServer(t, map[string]any{"chat.history": []any{}})
+	srv := mockChatServer(t, map[string]any{
+		"chat.history": map[string]any{"messages": []any{}},
+	})
 	defer srv.Close()
 	setupChatTest(srv.URL)
 
@@ -99,7 +103,9 @@ func TestChatHistory_WithLimitAndBefore(t *testing.T) {
 }
 
 func TestChatHistory_WithSession(t *testing.T) {
-	srv := mockChatServer(t, map[string]any{"chat.history": []any{}})
+	srv := mockChatServer(t, map[string]any{
+		"chat.history": map[string]any{"messages": []any{}},
+	})
 	defer srv.Close()
 	setupChatTest(srv.URL)
 
@@ -116,14 +122,14 @@ func TestChatHistory_WithSession(t *testing.T) {
 
 func TestChatInject_UserRole(t *testing.T) {
 	srv := mockChatServer(t, map[string]any{
-		"chat.inject": map[string]any{"injected": true, "message_id": "msg-1"},
+		"chat.inject": map[string]any{"ok": true, "messageId": "msg-1"},
 	})
 	defer srv.Close()
 	setupChatTest(srv.URL)
 
 	chatInjectCmd.Flags().Set("role", "user")
 	chatInjectCmd.Flags().Set("content", "Test message")
-	chatInjectCmd.Flags().Set("session", "")
+	chatInjectCmd.Flags().Set("session", "sess-1")
 
 	if err := chatInjectCmd.RunE(chatInjectCmd, []string{"my-agent"}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -132,14 +138,14 @@ func TestChatInject_UserRole(t *testing.T) {
 
 func TestChatInject_SystemRole(t *testing.T) {
 	srv := mockChatServer(t, map[string]any{
-		"chat.inject": map[string]any{"injected": true, "message_id": "msg-2"},
+		"chat.inject": map[string]any{"ok": true, "messageId": "msg-2"},
 	})
 	defer srv.Close()
 	setupChatTest(srv.URL)
 
 	chatInjectCmd.Flags().Set("role", "system")
 	chatInjectCmd.Flags().Set("content", "You are a helpful assistant.")
-	chatInjectCmd.Flags().Set("session", "")
+	chatInjectCmd.Flags().Set("session", "sess-2")
 
 	if err := chatInjectCmd.RunE(chatInjectCmd, []string{"my-agent"}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -153,7 +159,7 @@ func TestChatInject_InvalidRole(t *testing.T) {
 
 	chatInjectCmd.Flags().Set("role", "bot") // invalid
 	chatInjectCmd.Flags().Set("content", "hello")
-	chatInjectCmd.Flags().Set("session", "")
+	chatInjectCmd.Flags().Set("session", "sess-1")
 
 	err := chatInjectCmd.RunE(chatInjectCmd, []string{"my-agent"})
 	if err == nil {
@@ -171,7 +177,7 @@ func TestChatInject_EmptyContent(t *testing.T) {
 
 	chatInjectCmd.Flags().Set("role", "user")
 	chatInjectCmd.Flags().Set("content", "") // empty — invalid after readContent
-	chatInjectCmd.Flags().Set("session", "")
+	chatInjectCmd.Flags().Set("session", "sess-1")
 
 	err := chatInjectCmd.RunE(chatInjectCmd, []string{"my-agent"})
 	if err == nil {
@@ -181,7 +187,7 @@ func TestChatInject_EmptyContent(t *testing.T) {
 
 func TestChatInject_WithSession(t *testing.T) {
 	srv := mockChatServer(t, map[string]any{
-		"chat.inject": map[string]any{"injected": true, "session_key": "sess-1"},
+		"chat.inject": map[string]any{"ok": true, "messageId": "msg-3"},
 	})
 	defer srv.Close()
 	setupChatTest(srv.URL)
@@ -200,16 +206,14 @@ func TestChatInject_WithSession(t *testing.T) {
 func TestChatSessionStatus_ReturnsState(t *testing.T) {
 	srv := mockChatServer(t, map[string]any{
 		"chat.session.status": map[string]any{
-			"agent_key":   "my-agent",
-			"state":       "idle",
-			"turn_count":  5,
-			"last_active": "2024-01-01T12:00:00Z",
+			"isRunning": false,
+			"runId":     "",
 		},
 	})
 	defer srv.Close()
 	setupChatTest(srv.URL)
 
-	chatSessionStatusCmd.Flags().Set("session", "")
+	chatSessionStatusCmd.Flags().Set("session", "sess-1")
 
 	if err := chatSessionStatusCmd.RunE(chatSessionStatusCmd, []string{"my-agent"}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -219,7 +223,7 @@ func TestChatSessionStatus_ReturnsState(t *testing.T) {
 func TestChatSessionStatus_WithSession(t *testing.T) {
 	srv := mockChatServer(t, map[string]any{
 		"chat.session.status": map[string]any{
-			"state": "running", "session_key": "sess-42",
+			"isRunning": true, "runId": "run-42",
 		},
 	})
 	defer srv.Close()

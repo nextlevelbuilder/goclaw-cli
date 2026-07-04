@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/config"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"

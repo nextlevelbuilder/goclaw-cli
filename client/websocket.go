@@ -15,17 +15,21 @@ import (
 
 // WSClient is a WebSocket RPC client implementing GoClaw protocol v3.
 type WSClient struct {
-	conn      *websocket.Conn
-	serverURL string
-	token     string
-	userID    string
-	senderID  string
-	insecure  bool
+	conn        *websocket.Conn
+	serverURL   string
+	token       string
+	userID      string
+	senderID    string
+	locale      string
+	tenantHint  string
+	tenantID    string
+	tenantScope string
+	insecure    bool
 
 	nextID    atomic.Int64
-	mu        sync.Mutex   // protects pending and listeners
-	writeMu   sync.Mutex   // protects concurrent writes (gorilla requirement)
-	closeOnce sync.Once    // guards Close against concurrent readLoop + caller invocation
+	mu        sync.Mutex // protects pending and listeners
+	writeMu   sync.Mutex // protects concurrent writes (gorilla requirement)
+	closeOnce sync.Once  // guards Close against concurrent readLoop + caller invocation
 	pending   map[string]chan *WSResponse
 	listeners map[string][]func(*WSEvent)
 	done      chan struct{}
@@ -55,6 +59,26 @@ type WSEvent struct {
 	Payload json.RawMessage `json:"payload,omitempty"`
 }
 
+// ConnectServerInfo describes the server identity returned by the connect handshake.
+type ConnectServerInfo struct {
+	Name    string `json:"name"`
+	Version string `json:"version"`
+}
+
+// ConnectResult is the response payload for the connect handshake.
+type ConnectResult struct {
+	Protocol      int               `json:"protocol"`
+	Role          string            `json:"role"`
+	UserID        string            `json:"user_id"`
+	TenantID      string            `json:"tenant_id"`
+	IsOwner       bool              `json:"is_owner"`
+	IsMasterScope bool              `json:"is_master_scope"`
+	Edition       string            `json:"edition"`
+	Server        ConnectServerInfo `json:"server"`
+	TenantName    string            `json:"tenant_name,omitempty"`
+	TenantSlug    string            `json:"tenant_slug,omitempty"`
+}
+
 // NewWSClient creates a WebSocket client.
 func NewWSClient(serverURL, token, userID string, insecure bool) *WSClient {
 	return &WSClient{
@@ -66,6 +90,26 @@ func NewWSClient(serverURL, token, userID string, insecure bool) *WSClient {
 		listeners: make(map[string][]func(*WSEvent)),
 		done:      make(chan struct{}),
 	}
+}
+
+// SetLocale sets the user's preferred locale (en, vi, zh) sent on connect.
+func (ws *WSClient) SetLocale(locale string) {
+	ws.locale = locale
+}
+
+// SetTenantHint sets an optional tenant slug hint sent on connect (browser pairing multi-tenant).
+func (ws *WSClient) SetTenantHint(hint string) {
+	ws.tenantHint = hint
+}
+
+// SetTenantID sets the tenant scope (UUID or slug) sent on connect for cross-tenant admin callers.
+func (ws *WSClient) SetTenantID(tenantID string) {
+	ws.tenantID = tenantID
+}
+
+// SetTenantScope sets the deprecated tenant_scope alias for tenant_id, sent on connect.
+func (ws *WSClient) SetTenantScope(scope string) {
+	ws.tenantScope = scope
 }
 
 // Connect establishes WebSocket connection and performs handshake.
@@ -91,7 +135,7 @@ func (ws *WSClient) Connect() (*json.RawMessage, error) {
 	// Start read loop
 	go ws.readLoop()
 
-	// Send connect handshake
+	// Send connect handshake. Params are snake_case per protocol v3.
 	params := map[string]any{
 		"user_id": ws.userID,
 	}
@@ -100,6 +144,18 @@ func (ws *WSClient) Connect() (*json.RawMessage, error) {
 	}
 	if ws.senderID != "" {
 		params["sender_id"] = ws.senderID
+	}
+	if ws.locale != "" {
+		params["locale"] = ws.locale
+	}
+	if ws.tenantHint != "" {
+		params["tenant_hint"] = ws.tenantHint
+	}
+	if ws.tenantID != "" {
+		params["tenant_id"] = ws.tenantID
+	}
+	if ws.tenantScope != "" {
+		params["tenant_scope"] = ws.tenantScope
 	}
 
 	resp, err := ws.Call("connect", params)

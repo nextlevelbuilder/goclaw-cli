@@ -89,7 +89,7 @@ All files follow Cobra pattern: root command + subcommands.
 #### client/ — HTTP + WebSocket Clients
 
 ```
-internal/client/
+client/
 ├── http.go                # REST API client
 ├── websocket.go           # WebSocket streaming
 ├── auth.go                # Auth helpers (keyring, device pairing)
@@ -535,8 +535,8 @@ Each level overrides the previous.
 
 | File | Purpose |
 |------|---------|
-| `internal/client/signed_download.go` | `DownloadSigned(url, dst, insecure, progress)` — GET with NO auth header |
-| `internal/client/multipart_upload.go` | `UploadFile(path, field, file)` — streaming pipe-based multipart POST |
+| `client/signed_download.go` | `DownloadSigned(url, dst, insecure, progress)` — GET with NO auth header |
+| `client/multipart_upload.go` | `UploadFile(path, field, file)` — streaming pipe-based multipart POST |
 | `cmd/io_helpers.go` | `copyProgress`, `writeToFile`, `printProgress` shared helpers |
 
 ---

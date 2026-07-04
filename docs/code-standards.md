@@ -54,7 +54,7 @@ goclaw-cli/
 ### Naming Conventions
 
 - **Go Files:** `snake_case.go` (e.g., `config_cmd.go`, `websocket.go`)
-- **Packages:** Lowercase, no underscores (e.g., `internal/client`, `internal/config`)
+- **Packages:** Lowercase, no underscores (e.g., `client`, `internal/config`)
 - **Functions:** `PascalCase` (exported), `camelCase` (unexported)
 - **Variables:** `camelCase` (local), `CONSTANT_CASE` (constants)
 - **Interfaces:** `Reader`, `Writer`, `Handler` (noun-based)
@@ -73,7 +73,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -118,7 +118,7 @@ The `output` package uses duck-typed interfaces (`apiErrorIface`, `apiErrorWithS
 
 ### API Client Pattern
 
-**HTTP Client (internal/client/http.go):**
+**HTTP Client (client/http.go):**
 
 ```go
 type HTTPClient struct {
@@ -713,7 +713,7 @@ if cfg.Confirm != expectedValue {
 
 **FollowStream Pattern:**
 ```go
-// internal/client/follow.go
+// client/follow.go
 func FollowStream(ctx context.Context, serverURL, token, ..., handler FollowHandler) error {
     // Reconnect on drop with exponential backoff: 1s → 2s → 4s → 8s → 16s (max 5 retries)
     // If handler returns error, stop immediately (no retry)

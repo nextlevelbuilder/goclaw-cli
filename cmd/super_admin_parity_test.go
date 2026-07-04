@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/websocket"
-	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 )
 
 func TestAPIKeysRevokeUsesPostRevokeRoute(t *testing.T) {

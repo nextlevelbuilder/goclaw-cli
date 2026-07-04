@@ -14,11 +14,11 @@ func TestVaultEnrichmentStatus_CallsEndpoint(t *testing.T) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(vaultEnvelope(map[string]any{
-			"running":   true,
-			"total":     10,
-			"done":      4,
-			"failed":    0,
-			"percent":   40,
+			"running": true,
+			"total":   10,
+			"done":    4,
+			"failed":  0,
+			"percent": 40,
 		}))
 	}))
 	defer srv.Close()

@@ -118,10 +118,10 @@
 - [x] Output formatters (table, JSON, YAML)
 
 **Key Files:**
-- `internal/client/http.go`
-- `internal/client/websocket.go`
-- `internal/client/auth.go`
-- `internal/client/errors.go`
+- `client/http.go`
+- `client/websocket.go`
+- `client/auth.go`
+- `client/errors.go`
 - `internal/config/config.go`
 - `internal/output/output.go`
 - `internal/tui/prompt.go`
@@ -355,7 +355,7 @@
 
 **Key Files:**
 - `internal/output/exit.go`, `error.go`, `tty.go`
-- `internal/client/follow.go`
+- `client/follow.go`
 - `cmd/root.go` (error handler)
 - `CHANGELOG.md` (breaking change doc)
 
@@ -391,7 +391,7 @@
 - [x] Signed download flow (unauthenticated binary via token)
 - [x] Multipart streaming upload (no RAM buffering)
 
-**Key Files:** `cmd/backup.go`, `cmd/backup_s3.go`, `cmd/restore.go`, `cmd/*_export.go`, `internal/client/signed_download.go`, `internal/client/multipart_upload.go`
+**Key Files:** `cmd/backup.go`, `cmd/backup_s3.go`, `cmd/restore.go`, `cmd/*_export.go`, `client/signed_download.go`, `client/multipart_upload.go`
 
 **Status:** COMPLETE; 4 critical fixes applied (S3 masking, URL escaping, error propagation, MkdirAll)
 
@@ -504,7 +504,7 @@
 
 **Key Areas:**
 - `cmd/*_test.go` (command handlers)
-- `internal/client/*_test.go` (HTTP, WebSocket)
+- `client/*_test.go` (HTTP, WebSocket)
 - `internal/config/*_test.go` (configuration loading)
 - `internal/output/*_test.go` (formatters)
 

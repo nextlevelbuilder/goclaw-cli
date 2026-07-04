@@ -100,10 +100,9 @@ func TestAgentsWake(t *testing.T) {
 func TestAgentsIdentity_ReturnsIdentityJSON(t *testing.T) {
 	srv := mockAgentsWSServer(t, map[string]any{
 		"agent.identity.get": map[string]any{
-			"agent_key":    "my-agent",
-			"display_name": "My Agent",
-			"persona":      "helpful assistant",
-			"traits":       []string{"curious", "precise"},
+			"agentId":     "my-agent",
+			"name":        "My Agent",
+			"description": "helpful assistant",
 		},
 	})
 	defer srv.Close()
@@ -119,9 +118,8 @@ func TestAgentsIdentity_ReturnsIdentityJSON(t *testing.T) {
 func TestAgentsWait_SuccessfulStateMatch(t *testing.T) {
 	srv := mockAgentsWSServer(t, map[string]any{
 		"agent.wait": map[string]any{
-			"agent_key":  "my-agent",
-			"state":      "idle",
-			"reached_at": "2024-01-01T00:00:00Z",
+			"id":     "my-agent",
+			"status": "idle",
 		},
 	})
 	defer srv.Close()

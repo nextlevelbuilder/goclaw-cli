@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -44,9 +45,8 @@ WS method: agent.wait
 
 Response schema:
   {
-    "agent_key": "string",
-    "state":     "online|running|idle|offline",
-    "reached_at": "RFC3339 timestamp"
+    "id":     "string",
+    "status": "idle"
   }
 
 Examples:
@@ -84,20 +84,17 @@ Examples:
 		}
 		defer ws.Close()
 
-		params := map[string]any{"agent_key": args[0]}
-		if state != "" {
-			params["state"] = state
-		}
+		params := client.AgentParams{AgentID: args[0]}
 
 		// Call is blocking on the server side until state matches or server times out.
 		// We wrap with our own context deadline.
 		type result struct {
-			data []byte
+			data *client.AgentWaitResult
 			err  error
 		}
 		done := make(chan result, 1)
 		go func() {
-			data, err := ws.Call("agent.wait", params)
+			data, err := ws.AgentWait(params)
 			done <- result{data, err}
 		}()
 
@@ -120,7 +117,7 @@ Examples:
 			if r.err != nil {
 				return r.err
 			}
-			printer.Print(unmarshalMap(r.data))
+			printer.Print(r.data)
 			return nil
 		}
 	},
@@ -135,12 +132,11 @@ WS method: agent.identity.get
 
 Response schema:
   {
-    "agent_key":    "string",
-    "display_name": "string",
-    "persona":      "string",
-    "traits":       ["string", ...],
-    "goals":        ["string", ...],
-    "constraints":  ["string", ...]
+    "agentId":      "string",
+    "name":         "string",
+    "emoji":        "string",
+    "avatar":       "string",
+    "description":  "string"
   }
 
 Examples:
@@ -157,7 +153,7 @@ Examples:
 		}
 		defer ws.Close()
 
-		data, err := ws.Call("agent.identity.get", map[string]any{"agent_key": args[0]})
+		data, err := ws.Call("agent.identity.get", map[string]any{"agentId": args[0]})
 		if err != nil {
 			return err
 		}

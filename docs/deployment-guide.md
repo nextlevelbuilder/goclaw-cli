@@ -715,7 +715,7 @@ Default HTTP client reuses TCP connections (connection pooling). No tuning neede
 Currently hardcoded to 30 seconds per request. Override in future versions if needed.
 
 ```go
-// internal/client/http.go
+// client/http.go
 HTTPClient: &http.Client{
 	Timeout: 30 * time.Second,  // Can be made configurable
 }

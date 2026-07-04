@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
@@ -150,11 +151,11 @@ var sessionsCompactCmd = &cobra.Command{
 			return fmt.Errorf("connect: %w", err)
 		}
 		defer ws.Close()
-		resp, err := ws.Call("sessions.compact", map[string]any{"session_key": args[0]})
+		result, err := ws.SessionsCompact(client.SessionsCompactParams{Key: args[0]})
 		if err != nil {
 			return err
 		}
-		printer.Print(jsonToMap(resp))
+		printer.Print(result)
 		return nil
 	},
 }

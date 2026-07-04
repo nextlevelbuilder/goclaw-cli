@@ -15,10 +15,10 @@ var oauthCmd = &cobra.Command{Use: "oauth", Short: "Manage OAuth provider pool (
 // validOAuthProviders lists accepted --provider values.
 // Extend when server adds new providers.
 var validOAuthProviders = map[string]bool{
-	"openai":   true,
-	"chatgpt":  true,
-	"claude":   true, // chatgpt sub-provider — keep if server supports
-	"gemini":   true,
+	"openai":  true,
+	"chatgpt": true,
+	"claude":  true, // chatgpt sub-provider — keep if server supports
+	"gemini":  true,
 }
 
 // validateProvider returns an error if provider is not supported.

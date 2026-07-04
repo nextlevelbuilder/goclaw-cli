@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 )
 
 func uploadMediaFile(c *client.HTTPClient, filePath string) (*http.Response, error) {

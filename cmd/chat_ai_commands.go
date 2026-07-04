@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/spf13/cobra"
 )
 
@@ -17,16 +18,13 @@ var chatHistoryCmd = &cobra.Command{
 
 WS method: chat.history
 
-Response schema (array of message objects):
-  [
-    {
-      "role":        "user|assistant|system",
-      "content":     "string",
-      "created_at":  "RFC3339 timestamp",
-      "session_key": "string"
-    },
-    ...
-  ]
+Response schema:
+  {
+    "messages": [
+      {"role": "user|assistant|system", "content": "string", ...},
+      ...
+    ]
+  }
 
 Flags:
   --limit  N       Maximum messages to return (default: 50)
@@ -60,16 +58,14 @@ This endpoint requires admin-level permissions on the server.
 WS method: chat.inject
 
 Request fields:
-  agent_key   string  Agent key (required)
-  role        string  "user", "assistant", or "system" (required)
-  content     string  Message content (required)
-  session_key string  Target session key (optional)
+  sessionKey string  Target session key (required)
+  message    string  Message content (required)
+  label      string  Optional label (role is used as label)
 
 Response schema:
   {
-    "injected":    true,
-    "message_id":  "string",
-    "session_key": "string"
+    "ok":        true,
+    "messageId": "string"
   }
 
 Examples:
@@ -93,6 +89,9 @@ Examples:
 		if content == "" {
 			return fmt.Errorf("--content is required and must not be empty")
 		}
+		if session == "" {
+			return fmt.Errorf("--session is required")
+		}
 
 		ws, err := newWS("cli")
 		if err != nil {
@@ -103,20 +102,15 @@ Examples:
 		}
 		defer ws.Close()
 
-		params := map[string]any{
-			"agent_key": args[0],
-			"role":      role,
-			"content":   content,
-		}
-		if session != "" {
-			params["session_key"] = session
-		}
-
-		data, err := ws.Call("chat.inject", params)
+		result, err := ws.ChatInject(client.ChatInjectParams{
+			SessionKey: session,
+			Message:    content,
+			Label:      role,
+		})
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalMap(data))
+		printer.Print(result)
 		return nil
 	},
 }
@@ -130,21 +124,20 @@ WS method: chat.session.status
 
 Response schema:
   {
-    "agent_key":   "string",
-    "session_key": "string",
-    "state":       "idle|running|waiting|error",
-    "turn_count":  42,
-    "last_active": "RFC3339 timestamp",
-    "model":       "string"
+    "isRunning": true,
+    "runId":     "string",
+    "activity":  {"phase": "string", "tool": "string", "iteration": 1}
   }
 
 Examples:
-  goclaw chat session-status my-agent
-  goclaw chat session-status my-agent --output=json | jq '.state'
-  goclaw chat session-status my-agent --session=sess-key-1`,
+  goclaw chat session-status my-agent --session=sess-key-1
+  goclaw chat session-status my-agent --output=json | jq '.isRunning'`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		session, _ := cmd.Flags().GetString("session")
+		if session == "" {
+			return fmt.Errorf("--session is required")
+		}
 
 		ws, err := newWS("cli")
 		if err != nil {
@@ -155,16 +148,11 @@ Examples:
 		}
 		defer ws.Close()
 
-		params := map[string]any{"agent_key": args[0]}
-		if session != "" {
-			params["session_key"] = session
-		}
-
-		data, err := ws.Call("chat.session.status", params)
+		result, err := ws.ChatSessionStatus(client.ChatSessionStatusParams{SessionKey: session})
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalMap(data))
+		printer.Print(result)
 		return nil
 	},
 }
@@ -181,9 +169,11 @@ func init() {
 	chatInjectCmd.Flags().String("content", "", "Message content (or @filepath)")
 	_ = chatInjectCmd.MarkFlagRequired("content")
 	chatInjectCmd.Flags().String("session", "", "Target session key")
+	_ = chatInjectCmd.MarkFlagRequired("session")
 
 	// chat session-status flags
 	chatSessionStatusCmd.Flags().String("session", "", "Session key to query")
+	_ = chatSessionStatusCmd.MarkFlagRequired("session")
 
 	chatCmd.AddCommand(chatHistoryCmd, chatInjectCmd, chatSessionStatusCmd)
 }

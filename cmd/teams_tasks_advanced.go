@@ -9,7 +9,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/nextlevelbuilder/goclaw-cli/internal/client"
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
@@ -176,7 +176,7 @@ Example:
 		}
 		defer ws.Close()
 		data, err := ws.Call("teams.tasks.active-by-session", map[string]any{
-			"session_key": session,
+			"sessionKey": session,
 		})
 		if err != nil {
 			return err

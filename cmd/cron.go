@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/nextlevelbuilder/goclaw-cli/client"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/output"
 	"github.com/nextlevelbuilder/goclaw-cli/internal/tui"
 	"github.com/spf13/cobra"
@@ -13,36 +14,29 @@ var cronCmd = &cobra.Command{Use: "cron", Short: "Manage scheduled jobs"}
 var cronListCmd = &cobra.Command{
 	Use: "list", Short: "List cron jobs",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := newHTTP()
+		ws, err := newWS("cli")
 		if err != nil {
 			return err
-		}
-		ws, wsErr := newWS("cli")
-		if wsErr != nil {
-			return wsErr
 		}
 		if _, err := ws.Connect(); err != nil {
 			return err
 		}
 		defer ws.Close()
-		data, err := ws.Call("cron.list", nil)
+		result, err := ws.CronList(client.CronListParams{})
 		if err != nil {
-			// Fallback to HTTP if WS method unavailable
-			_ = c
 			return err
 		}
 		if cfg.OutputFormat != "table" {
-			printer.Print(unmarshalList(data))
+			printer.Print(result.Jobs)
 			return nil
 		}
-		tbl := output.NewTable("ID", "NAME", "AGENT", "SCHEDULE", "ENABLED", "LAST_STATUS", "NEXT_RUN")
-		for _, j := range unmarshalList(data) {
-			schedule := str(j, "cron_expression")
-			if schedule == "" {
-				schedule = str(j, "interval_ms") + "ms"
+		tbl := output.NewTable("ID", "NAME", "AGENT", "SCHEDULE", "ENABLED", "DELIVER_CHANNEL")
+		for _, j := range result.Jobs {
+			schedule := j.Schedule.Expr
+			if schedule == "" && j.Schedule.EveryMS != nil {
+				schedule = fmt.Sprintf("%dms", *j.Schedule.EveryMS)
 			}
-			tbl.AddRow(str(j, "id"), str(j, "name"), str(j, "agent_id"),
-				schedule, str(j, "enabled"), str(j, "last_status"), str(j, "next_run_at"))
+			tbl.AddRow(j.ID, j.Name, j.AgentID, schedule, fmt.Sprintf("%v", j.Enabled), j.DeliverChannel)
 		}
 		printer.Print(tbl)
 		return nil
@@ -60,12 +54,17 @@ var cronGetCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		data, err := ws.Call("cron.status", map[string]any{"id": args[0]})
+		result, err := ws.CronList(client.CronListParams{IncludeDisabled: true})
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalMap(data))
-		return nil
+		for _, j := range result.Jobs {
+			if j.ID == args[0] {
+				printer.Print(j)
+				return nil
+			}
+		}
+		return fmt.Errorf("cron job %q not found", args[0])
 	},
 }
 
@@ -87,17 +86,22 @@ var cronCreateCmd = &cobra.Command{
 		message, _ := cmd.Flags().GetString("message")
 		timezone, _ := cmd.Flags().GetString("timezone")
 
-		params := buildBody("agent_id", agent, "name", name,
-			"cron_expression", schedule, "timezone", timezone)
-		if message != "" {
-			params["payload"] = map[string]any{"message": message}
+		params := client.CronCreateParams{
+			Name:    name,
+			AgentID: agent,
+			Message: message,
+			Schedule: client.CronSchedule{
+				Kind: "cron",
+				Expr: schedule,
+				TZ:   timezone,
+			},
 		}
 
-		data, err := ws.Call("cron.create", params)
+		result, err := ws.CronCreate(params)
 		if err != nil {
 			return err
 		}
-		printer.Success(fmt.Sprintf("Cron job created: %s", str(unmarshalMap(data), "id")))
+		printer.Success(fmt.Sprintf("Cron job created: %s", result.Job.ID))
 		return nil
 	},
 }
@@ -113,16 +117,16 @@ var cronUpdateCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		params := map[string]any{"id": args[0]}
+		patch := client.CronJobPatch{}
 		if cmd.Flags().Changed("name") {
 			v, _ := cmd.Flags().GetString("name")
-			params["name"] = v
+			patch.Name = v
 		}
 		if cmd.Flags().Changed("schedule") {
 			v, _ := cmd.Flags().GetString("schedule")
-			params["cron_expression"] = v
+			patch.Schedule = &client.CronSchedule{Kind: "cron", Expr: v}
 		}
-		_, err = ws.Call("cron.update", params)
+		_, err = ws.CronUpdate(client.CronUpdateParams{JobID: args[0], Patch: patch})
 		if err != nil {
 			return err
 		}
@@ -145,7 +149,7 @@ var cronDeleteCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		_, err = ws.Call("cron.delete", map[string]any{"id": args[0]})
+		_, err = ws.CronDelete(client.CronJobIDParams{JobID: args[0]})
 		if err != nil {
 			return err
 		}
@@ -157,6 +161,7 @@ var cronDeleteCmd = &cobra.Command{
 var cronToggleCmd = &cobra.Command{
 	Use: "toggle <id>", Short: "Enable/disable cron job", Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		enabled, _ := cmd.Flags().GetBool("enabled")
 		ws, err := newWS("cli")
 		if err != nil {
 			return err
@@ -165,7 +170,7 @@ var cronToggleCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		_, err = ws.Call("cron.toggle", map[string]any{"id": args[0]})
+		_, err = ws.CronToggle(client.CronToggleParams{JobID: args[0], Enabled: enabled})
 		if err != nil {
 			return err
 		}
@@ -185,7 +190,7 @@ var cronRunCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		_, err = ws.Call("cron.run", map[string]any{"id": args[0]})
+		_, err = ws.CronRun(client.CronRunParams{JobID: args[0], Mode: "force"})
 		if err != nil {
 			return err
 		}
@@ -205,12 +210,17 @@ var cronStatusCmd = &cobra.Command{
 			return err
 		}
 		defer ws.Close()
-		data, err := ws.Call("cron.status", map[string]any{"id": args[0]})
+		result, err := ws.CronList(client.CronListParams{IncludeDisabled: true})
 		if err != nil {
 			return err
 		}
-		printer.Print(unmarshalMap(data))
-		return nil
+		for _, j := range result.Jobs {
+			if j.ID == args[0] {
+				printer.Print(j.State)
+				return nil
+			}
+		}
+		return fmt.Errorf("cron job %q not found", args[0])
 	},
 }
 
@@ -226,24 +236,11 @@ var cronRunsCmd = &cobra.Command{
 		}
 		defer ws.Close()
 		limit, _ := cmd.Flags().GetInt("limit")
-		params := map[string]any{"id": args[0]}
-		if limit > 0 {
-			params["limit"] = limit
-		}
-		data, err := ws.Call("cron.runs", params)
+		result, err := ws.CronRuns(client.CronRunsParams{JobID: args[0], Limit: limit})
 		if err != nil {
 			return err
 		}
-		if cfg.OutputFormat != "table" {
-			printer.Print(unmarshalList(data))
-			return nil
-		}
-		tbl := output.NewTable("RUN_ID", "STATUS", "STARTED", "DURATION_MS", "TOKENS")
-		for _, r := range unmarshalList(data) {
-			tbl.AddRow(str(r, "id"), str(r, "status"), str(r, "started_at"),
-				str(r, "duration_ms"), str(r, "total_tokens"))
-		}
-		printer.Print(tbl)
+		printer.Print(result)
 		return nil
 	},
 }
@@ -260,6 +257,7 @@ func init() {
 
 	cronUpdateCmd.Flags().String("name", "", "Job name")
 	cronUpdateCmd.Flags().String("schedule", "", "Cron expression")
+	cronToggleCmd.Flags().Bool("enabled", true, "Enable or disable the job")
 	cronRunsCmd.Flags().Int("limit", 20, "Max results")
 
 	cronCmd.AddCommand(cronListCmd, cronGetCmd, cronCreateCmd, cronUpdateCmd,

@@ -214,8 +214,8 @@ func TestGraphJSONToDOT_SkipsIncompleteEdges(t *testing.T) {
 	input := map[string]any{
 		"nodes": []any{},
 		"edges": []map[string]any{
-			{"from_doc_id": "", "to_doc_id": "x"},  // empty from — skip
-			{"from_doc_id": "y", "to_doc_id": ""},  // empty to — skip
+			{"from_doc_id": "", "to_doc_id": "x"}, // empty from — skip
+			{"from_doc_id": "y", "to_doc_id": ""}, // empty to — skip
 		},
 	}
 	raw, _ := json.Marshal(input)

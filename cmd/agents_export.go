@@ -26,7 +26,7 @@ Examples:
 		}
 		outFile, _ := cmd.Flags().GetString("file")
 
-		resp, err := c.GetRaw("/v1/agents/"+args[0]+"/export")
+		resp, err := c.GetRaw("/v1/agents/" + args[0] + "/export")
 		if err != nil {
 			return err
 		}

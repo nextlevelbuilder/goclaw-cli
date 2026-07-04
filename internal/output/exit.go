@@ -25,9 +25,9 @@ var serverCodeMap = map[string]int{
 	"NOT_LINKED": ExitNotFound,
 
 	// Validation (4)
-	"INVALID_REQUEST":    ExitValidation,
+	"INVALID_REQUEST":     ExitValidation,
 	"FAILED_PRECONDITION": ExitValidation,
-	"ALREADY_EXISTS":     ExitValidation,
+	"ALREADY_EXISTS":      ExitValidation,
 
 	// Server (5)
 	"INTERNAL":      ExitServer,
