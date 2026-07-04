@@ -104,12 +104,12 @@ Examples:
 		defer ws.Close()
 
 		params := map[string]any{
-			"agent_key": args[0],
-			"role":      role,
-			"content":   content,
+			"agentId": args[0],
+			"role":    role,
+			"content": content,
 		}
 		if session != "" {
-			params["session_key"] = session
+			params["sessionKey"] = session
 		}
 
 		data, err := ws.Call("chat.inject", params)
@@ -155,9 +155,9 @@ Examples:
 		}
 		defer ws.Close()
 
-		params := map[string]any{"agent_key": args[0]}
+		params := map[string]any{"agentId": args[0]}
 		if session != "" {
-			params["session_key"] = session
+			params["sessionKey"] = session
 		}
 
 		data, err := ws.Call("chat.session.status", params)

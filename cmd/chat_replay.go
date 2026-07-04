@@ -25,14 +25,14 @@ func runChatHistory(agent, session, before string, limit int) error {
 	defer ws.Close()
 
 	params := map[string]any{
-		"agent_key": agent,
-		"limit":     limit,
+		"agentId": agent,
+		"limit":   limit,
 	}
 	if before != "" {
 		params["before"] = before
 	}
 	if session != "" {
-		params["session_key"] = session
+		params["sessionKey"] = session
 	}
 
 	data, err := ws.Call("chat.history", params)

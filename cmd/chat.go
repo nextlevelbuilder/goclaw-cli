@@ -64,11 +64,11 @@ func chatSingleShot(agentKey, message, session string, noStream bool) error {
 	defer ws.Close()
 
 	params := map[string]any{
-		"agent_key": agentKey,
-		"message":   message,
+		"agentId": agentKey,
+		"message": message,
 	}
 	if session != "" {
-		params["session_key"] = session
+		params["sessionKey"] = session
 	}
 
 	if noStream || cfg.OutputFormat == "json" {
@@ -151,11 +151,11 @@ func chatInteractive(agentKey, session string) error {
 			fmt.Println("Goodbye!")
 			return nil
 		case "/abort":
-			_, _ = ws.Call("chat.abort", map[string]any{"agent_key": agentKey})
+			_, _ = ws.Call("chat.abort", map[string]any{"agentId": agentKey})
 			fmt.Println("[aborted]")
 			continue
 		case "/sessions":
-			resp, err := ws.Call("sessions.list", map[string]any{"agent_key": agentKey})
+			resp, err := ws.Call("sessions.list", map[string]any{"agentId": agentKey})
 			if err != nil {
 				fmt.Printf("Error: %s\n", err)
 				continue
@@ -164,18 +164,18 @@ func chatInteractive(agentKey, session string) error {
 			continue
 		case "/clear":
 			if session != "" {
-				_, _ = ws.Call("sessions.reset", map[string]any{"session_key": session})
+				_, _ = ws.Call("sessions.reset", map[string]any{"sessionKey": session})
 				fmt.Println("[session cleared]")
 			}
 			continue
 		}
 
 		params := map[string]any{
-			"agent_key": agentKey,
-			"message":   input,
+			"agentId": agentKey,
+			"message": input,
 		}
 		if session != "" {
-			params["session_key"] = session
+			params["sessionKey"] = session
 		}
 
 		_, err := ws.Stream("chat.send", params, func(e *client.WSEvent) {

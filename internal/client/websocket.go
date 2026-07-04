@@ -146,7 +146,7 @@ func (ws *WSClient) Call(method string, params any) (json.RawMessage, error) {
 			return nil, resp.Error
 		}
 		return resp.Payload, nil
-	case <-time.After(30 * time.Second):
+	case <-time.After(300 * time.Second):
 		return nil, fmt.Errorf("timeout waiting for response to %s", method)
 	case <-ws.done:
 		return nil, fmt.Errorf("connection closed")
